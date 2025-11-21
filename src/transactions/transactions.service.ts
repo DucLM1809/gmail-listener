@@ -6,7 +6,7 @@ import * as cheerio from 'cheerio';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
-export class GmailTransactionsService {
+export class TransactionsService {
   private gmail: ReturnType<typeof google.gmail>;
 
   constructor(

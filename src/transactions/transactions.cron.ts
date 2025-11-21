@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { GmailTransactionsService } from './gmail-transactions.service';
+import { TransactionsService } from './transactions.service';
 
 @Injectable()
 export class TransactionsCron {
-  constructor(private readonly gmailService: GmailTransactionsService) {}
+  constructor(private readonly gmailService: TransactionsService) {}
 
   // Update the cron expression to run at 11:59 PM
   @Cron('59 23 * * *')

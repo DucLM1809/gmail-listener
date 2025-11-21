@@ -1,9 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
-import { GmailTransactionsService } from './gmail-transactions.service';
+import { TransactionsService } from './transactions.service';
 
 @Controller('transactions')
 export class TransactionsController {
-  constructor(private readonly gmailService: GmailTransactionsService) {}
+  constructor(private readonly gmailService: TransactionsService) {}
 
   @Get('vcb/today')
   async getTodayTransactions() {
