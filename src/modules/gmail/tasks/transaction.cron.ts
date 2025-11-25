@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { GmailService } from './gmail.service';
+import { GmailService } from '../services/gmail.service';
 
 @Injectable()
 export class TransactionsCron {

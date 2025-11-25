@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Post, Body } from '@nestjs/common';
-import { GmailService } from './gmail.service';
+import { GmailService } from '../services/gmail.service';
 
 @Controller('gmail')
 export class GmailController {

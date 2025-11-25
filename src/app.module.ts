@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TransactionsModule } from './transactions/transactions.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { GmailModule } from './gmail/gmail.module';
-import { PrismaModule } from './prisma/prisma.module';
+
+import { PrismaModule } from './infrastructure/prisma/prisma.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { GmailModule } from './modules/gmail/gmail.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 
 @Module({
   imports: [
@@ -11,9 +13,10 @@ import { PrismaModule } from './prisma/prisma.module';
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
+    PrismaModule,
     GmailModule,
     TransactionsModule,
-    PrismaModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

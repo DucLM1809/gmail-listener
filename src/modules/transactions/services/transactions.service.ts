@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { google } from 'googleapis';
 import * as moment from 'moment';
-import { GmailService } from 'src/gmail/gmail.service';
+import { GmailService } from 'src/modules/gmail/services/gmail.service';
 import * as cheerio from 'cheerio';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class TransactionsService {

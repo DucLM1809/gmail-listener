@@ -1,16 +1,16 @@
 import { Controller, Get } from '@nestjs/common';
-import { TransactionsService } from './transactions.service';
+
+import { TransactionsService } from '../services/transactions.service';
 
 @Controller('transactions')
 export class TransactionsController {
-  constructor(private readonly gmailService: TransactionsService) {}
+  constructor(private readonly transactionsService: TransactionsService) {}
 
   @Get('vcb/today')
   async getTodayTransactions() {
-    const vcbTransactions = await this.gmailService.getTodayVcbTransactions();
-
+    const vcbTransactions = await this.transactionsService.getTodayVcbTransactions();
     const vcbDigitalTransactions =
-      await this.gmailService.getTodayVcbDigitalTransactions();
+      await this.transactionsService.getTodayVcbDigitalTransactions();
 
     const data = [...vcbTransactions, ...vcbDigitalTransactions];
 
