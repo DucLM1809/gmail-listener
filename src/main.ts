@@ -14,7 +14,7 @@ async function bootstrap() {
       type: 'oauth2',
       flows: {
         authorizationCode: {
-          authorizationUrl: `${process.env.API_URL}/auth/google`,
+          authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
           tokenUrl: 'https://oauth2.googleapis.com/token',
           scopes: {
             email: 'Read email',

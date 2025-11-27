@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { google } from 'googleapis';
 import * as moment from 'moment';
 import { GmailService } from 'src/modules/gmail/services/gmail.service';
 import * as cheerio from 'cheerio';
-import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
+import { ITransactionRepository } from 'src/domain/repositories/transaction.repository.interface';
 
 @Injectable()
 export class TransactionsService {
@@ -11,7 +11,8 @@ export class TransactionsService {
 
   constructor(
     private readonly gmailService: GmailService,
-    private readonly prisma: PrismaService,
+    @Inject('ITransactionRepository')
+    private readonly transactionRepository: ITransactionRepository,
   ) {
     this.gmail = google.gmail({
       version: 'v1',
@@ -49,23 +50,20 @@ export class TransactionsService {
 
       const transaction = this.parseVcbHtml(decoded);
 
-      const existedMessage = await this.prisma.transaction.findFirst({
-        where: { messageId },
-      });
+      const existedMessage =
+        await this.transactionRepository.findByMessageId(messageId);
 
       if (transaction && !!transaction.amount && !existedMessage) {
-        const saved = await this.prisma.transaction.create({
-          data: {
-            messageId,
-            amount: transaction.amount,
-            description: transaction.description,
+        const saved = await this.transactionRepository.create({
+          messageId,
+          amount: transaction.amount,
+          description: transaction.description,
 
-            time: moment(transaction.time, 'DD/MM/YYYY HH:mm:ss').isValid()
-              ? moment(transaction.time, 'DD/MM/YYYY HH:mm:ss').toDate()
-              : null,
-            location: transaction.location,
-            rawText: transaction.rawText,
-          },
+          time: moment(transaction.time, 'DD/MM/YYYY HH:mm:ss').isValid()
+            ? moment(transaction.time, 'DD/MM/YYYY HH:mm:ss').toDate()
+            : null,
+          location: transaction.location,
+          rawText: transaction.rawText,
         });
       }
       results.push(transaction);
@@ -104,34 +102,31 @@ export class TransactionsService {
 
       const transaction = this.parseVcbDigitalHtml(decoded);
 
-      const existedMessage = await this.prisma.transaction.findFirst({
-        where: { messageId },
-      });
+      const existedMessage =
+        await this.transactionRepository.findByMessageId(messageId);
 
       if (transaction && !!transaction.amount && !existedMessage) {
-        const saved = await this.prisma.transaction.create({
-          data: {
-            messageId,
-            amount: transaction.amount,
-            description: transaction.description,
-            // convert this time format: 09:10 Thứ Sáu 21/11/2025 -> to Date
-            time: moment(
-              transaction.time,
-              'HH:mm [Thứ] dddd DD/MM/YYYY',
-              'vi',
-            ).isValid()
-              ? moment(
-                  transaction.time,
-                  'HH:mm [Thứ] dddd DD/MM/YYYY',
-                  'vi',
-                ).toDate()
-              : null,
-            beneficiaryName: transaction.beneficiaryName,
-            beneficiaryBankName: transaction.beneficiaryBankName,
-            chargeCode: transaction.chargeCode,
-            chargeAmount: transaction.chargeAmount,
-            rawText: transaction.rawText,
-          },
+        const saved = await this.transactionRepository.create({
+          messageId,
+          amount: transaction.amount,
+          description: transaction.description,
+          // convert this time format: 09:10 Thứ Sáu 21/11/2025 -> to Date
+          time: moment(
+            transaction.time,
+            'HH:mm [Thứ] dddd DD/MM/YYYY',
+            'vi',
+          ).isValid()
+            ? moment(
+                transaction.time,
+                'HH:mm [Thứ] dddd DD/MM/YYYY',
+                'vi',
+              ).toDate()
+            : null,
+          beneficiaryName: transaction.beneficiaryName,
+          beneficiaryBankName: transaction.beneficiaryBankName,
+          chargeCode: transaction.chargeCode,
+          chargeAmount: transaction.chargeAmount,
+          rawText: transaction.rawText,
         });
       }
       results.push(transaction);
