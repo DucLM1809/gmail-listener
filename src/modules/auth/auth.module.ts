@@ -5,6 +5,7 @@ import { AuthController } from './controllers/auth.controller';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import { AuthService } from './services/auth.service';
 import { GoogleStrategy } from './strategies/google-oauth.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
 import { UserRepository } from 'src/infrastructure/repositories/user.repository';
 
 @Module({
@@ -19,6 +20,7 @@ import { UserRepository } from 'src/infrastructure/repositories/user.repository'
   providers: [
     AuthService,
     GoogleStrategy,
+    JwtStrategy,
     GoogleOAuthGuard,
     { provide: 'IUserRepository', useClass: UserRepository },
   ],

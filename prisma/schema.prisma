@@ -32,6 +32,7 @@ model Transaction {
 model User {
   id           String  @id @default(uuid())
   email        String  @unique
+  password     String?
   name         String?
   picture      String?
   accessToken  String?
