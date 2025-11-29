@@ -22,6 +22,7 @@ import {
 } from '../exceptions/auth.exceptions';
 
 import { BaseController } from 'src/core/base.controller';
+import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 
 @Controller('auth')
 export class AuthController extends BaseController {
@@ -37,6 +38,16 @@ export class AuthController extends BaseController {
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return this.handleResult(await this.authService.login(loginDto));
+  }
+
+  @UseGuards(RefreshTokenGuard)
+  @Post('refresh')
+  async refreshTokens(@Request() req) {
+    const userId = req.user['sub'];
+    const refreshToken = req.user['refreshToken'];
+    return this.handleResult(
+      await this.authService.refreshTokens(userId, refreshToken),
+    );
   }
 
   protected resolveError(error: any): HttpException {

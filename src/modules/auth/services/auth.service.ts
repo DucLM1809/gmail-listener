@@ -12,6 +12,7 @@ import {
   UserAlreadyExistsException,
   InvalidCredentialsException,
 } from '../exceptions/auth.exceptions';
+import { ForbiddenException } from '@nestjs/common';
 
 @Injectable()
 export class AuthService {
@@ -38,7 +39,7 @@ export class AuthService {
       });
     }
 
-    return this.generateToken(user);
+    return this.getTokens(user.id, user.email);
   }
 
   async register(registerDto: RegisterDto): Promise<Result<TokenResponse>> {
@@ -57,7 +58,9 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    return Result.ok(this.generateToken(user));
+    const tokens = await this.getTokens(user.id, user.email);
+    await this.updateRefreshToken(user.id, tokens.refresh_token);
+    return Result.ok(tokens);
   }
 
   async login(loginDto: LoginDto): Promise<Result<TokenResponse>> {
@@ -74,13 +77,70 @@ export class AuthService {
       return Result.fail(new InvalidCredentialsException());
     }
 
-    return Result.ok(this.generateToken(user));
+    const tokens = await this.getTokens(user.id, user.email);
+    await this.updateRefreshToken(user.id, tokens.refresh_token);
+    return Result.ok(tokens);
   }
 
-  private generateToken(user: User): TokenResponse {
-    const payload = { email: user.email, sub: user.id };
+  async refreshTokens(
+    userId: string,
+    refreshToken: string,
+  ): Promise<Result<TokenResponse>> {
+    const user = await this.userRepository.findOne(userId);
+    if (!user || !user.hashedRefreshToken) {
+      throw new ForbiddenException('Access Denied');
+    }
+
+    const refreshTokenMatches = await bcrypt.compare(
+      refreshToken,
+      user.hashedRefreshToken,
+    );
+    if (!refreshTokenMatches) {
+      throw new ForbiddenException('Access Denied');
+    }
+
+    const tokens = await this.getTokens(user.id, user.email);
+    await this.updateRefreshToken(user.id, tokens.refresh_token);
+    return Result.ok(tokens);
+  }
+
+  async updateRefreshToken(userId: string, refreshToken: string) {
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.userRepository.update(userId, {
+      hashedRefreshToken,
+    });
+  }
+
+  private async getTokens(
+    userId: string,
+    email: string,
+  ): Promise<TokenResponse> {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwt.signAsync(
+        {
+          sub: userId,
+          email,
+        },
+        {
+          secret: ' your_jwt_secret', // TODO: Move to env
+          expiresIn: '15m',
+        },
+      ),
+      this.jwt.signAsync(
+        {
+          sub: userId,
+          email,
+        },
+        {
+          secret: ' your_jwt_secret', // TODO: Move to env
+          expiresIn: '7d',
+        },
+      ),
+    ]);
+
     return {
-      access_token: this.jwt.sign(payload),
+      access_token: accessToken,
+      refresh_token: refreshToken,
     };
   }
 }

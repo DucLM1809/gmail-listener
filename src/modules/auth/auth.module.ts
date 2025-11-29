@@ -6,6 +6,7 @@ import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import { AuthService } from './services/auth.service';
 import { GoogleStrategy } from './strategies/google-oauth.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { UserRepository } from 'src/infrastructure/repositories/user.repository';
 
 @Module({
@@ -21,6 +22,7 @@ import { UserRepository } from 'src/infrastructure/repositories/user.repository'
     AuthService,
     GoogleStrategy,
     JwtStrategy,
+    RefreshTokenStrategy,
     GoogleOAuthGuard,
     { provide: 'IUserRepository', useClass: UserRepository },
   ],
