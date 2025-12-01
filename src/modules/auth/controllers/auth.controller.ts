@@ -23,7 +23,7 @@ import { BaseController } from 'src/core/base.controller';
 import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 
 @ApiTags('Auth')
-@Controller('auth')
+@Controller({ path: 'auth', version: '1' })
 export class AuthController extends BaseController {
   constructor(private readonly authService: AuthService) {
     super();
