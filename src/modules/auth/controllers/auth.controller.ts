@@ -1,19 +1,17 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
   Request,
-  Res,
   UseGuards,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
-import { RegisterDto } from '../dto/register.dto';
-import { LoginDto } from '../dto/login.dto';
-
-import { GoogleOAuthGuard } from '../guards/google-oauth.guard';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { RegisterDto } from '../dto/auth/register.dto';
+import { LoginDto } from '../dto/auth/login.dto';
+import { GoogleLoginDto } from '../dto/auth/google-login.dto';
+import { TokenResponseDto } from '../dto/auth/token-response.dto';
 import { AuthService } from '../services/auth.service';
 
 import {
@@ -24,6 +22,7 @@ import {
 import { BaseController } from 'src/core/base.controller';
 import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController extends BaseController {
   constructor(private readonly authService: AuthService) {
@@ -31,22 +30,60 @@ export class AuthController extends BaseController {
   }
 
   @Post('register')
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'User successfully registered',
+    type: TokenResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'User already exists',
+  })
   async register(@Body() registerDto: RegisterDto) {
     return this.handleResult(await this.authService.register(registerDto));
   }
 
   @Post('login')
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User successfully logged in',
+    type: TokenResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid credentials',
+  })
   async login(@Body() loginDto: LoginDto) {
     return this.handleResult(await this.authService.login(loginDto));
   }
 
   @Post('google')
-  async googleLogin(@Body('code') code: string) {
-    return this.handleResult(await this.authService.loginWithGoogleCode(code));
+  @ApiOperation({ summary: 'Login with Google' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User successfully logged in with Google',
+    type: TokenResponseDto,
+  })
+  async googleLogin(@Body() googleLoginDto: GoogleLoginDto) {
+    return this.handleResult(
+      await this.authService.loginWithGoogleCode(googleLoginDto.code),
+    );
   }
 
   @UseGuards(RefreshTokenGuard)
   @Post('refresh')
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Token successfully refreshed',
+    type: TokenResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid or expired refresh token',
+  })
   async refreshTokens(@Request() req) {
     const userId = req.user['sub'];
     const refreshToken = req.user['refreshToken'];

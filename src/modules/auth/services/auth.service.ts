@@ -1,10 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from 'generated/prisma/client';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto } from '../dto/register.dto';
-import { LoginDto } from '../dto/login.dto';
-import { GoogleUserDto } from '../dto/google-user.dto';
+import { RegisterDto } from '../dto/auth/register.dto';
+import { LoginDto } from '../dto/auth/login.dto';
+import { GoogleUserDto } from '../dto/auth/google-user.dto';
 import { TokenResponse } from '../interfaces/token.response';
 import { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { Result } from 'src/core/result';
@@ -90,7 +89,7 @@ export class AuthService {
     });
 
     const tokens = await this.getTokens(user.id, user.email);
-    await this.updateRefreshToken(user.id, tokens.refresh_token);
+    await this.updateRefreshToken(user.id, tokens.refreshToken);
     return Result.ok(tokens);
   }
 
@@ -109,7 +108,7 @@ export class AuthService {
     }
 
     const tokens = await this.getTokens(user.id, user.email);
-    await this.updateRefreshToken(user.id, tokens.refresh_token);
+    await this.updateRefreshToken(user.id, tokens.refreshToken);
     return Result.ok(tokens);
   }
 
@@ -131,7 +130,7 @@ export class AuthService {
     }
 
     const tokens = await this.getTokens(user.id, user.email);
-    await this.updateRefreshToken(user.id, tokens.refresh_token);
+    await this.updateRefreshToken(user.id, tokens.refreshToken);
     return Result.ok(tokens);
   }
 
@@ -170,8 +169,8 @@ export class AuthService {
     ]);
 
     return {
-      access_token: accessToken,
-      refresh_token: refreshToken,
+      accessToken,
+      refreshToken,
     };
   }
 }
