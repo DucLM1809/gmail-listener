@@ -27,6 +27,7 @@ export class AuthService {
 
   async loginWithGoogleCode(code: string): Promise<Result<TokenResponse>> {
     this.logger.log({ code }, 'loginWithGoogleCode called');
+
     const oauth2Client = new google.auth.OAuth2(
       this.configService.get('GOOGLE_CLIENT_ID'),
       this.configService.get('GOOGLE_CLIENT_SECRET'),
@@ -56,6 +57,7 @@ export class AuthService {
 
   async loginWithGoogle(googleUser: GoogleUserDto) {
     this.logger.log({ email: googleUser.email }, 'loginWithGoogle called');
+
     let user = await this.userRepository.findByEmail(googleUser.email);
 
     if (!user) {
@@ -78,9 +80,11 @@ export class AuthService {
 
   async register(registerDto: RegisterDto): Promise<Result<TokenResponse>> {
     this.logger.log({ email: registerDto.email }, 'register called');
+
     const existingUser = await this.userRepository.findByEmail(
       registerDto.email,
     );
+
     if (existingUser) {
       return Result.fail(new UserAlreadyExistsException());
     }
@@ -94,13 +98,17 @@ export class AuthService {
     });
 
     const tokens = await this.getTokens(user.id, user.email);
+
     await this.updateRefreshToken(user.id, tokens.refreshToken);
+
     return Result.ok(tokens);
   }
 
   async login(loginDto: LoginDto): Promise<Result<TokenResponse>> {
     this.logger.log({ email: loginDto.email }, 'login called');
+
     const user = await this.userRepository.findByEmail(loginDto.email);
+
     if (!user || !user.password) {
       return Result.fail(new InvalidCredentialsException());
     }
@@ -109,12 +117,15 @@ export class AuthService {
       loginDto.password,
       user.password,
     );
+
     if (!isPasswordValid) {
       return Result.fail(new InvalidCredentialsException());
     }
 
     const tokens = await this.getTokens(user.id, user.email);
+
     await this.updateRefreshToken(user.id, tokens.refreshToken);
+
     return Result.ok(tokens);
   }
 
@@ -123,7 +134,9 @@ export class AuthService {
     refreshToken: string,
   ): Promise<Result<TokenResponse>> {
     this.logger.log({ userId }, 'refreshTokens called');
+
     const user = await this.userRepository.findOne(userId);
+
     if (!user || !user.hashedRefreshToken) {
       throw new ForbiddenException('Access Denied');
     }
@@ -132,17 +145,21 @@ export class AuthService {
       refreshToken,
       user.hashedRefreshToken,
     );
+
     if (!refreshTokenMatches) {
       throw new ForbiddenException('Access Denied');
     }
 
     const tokens = await this.getTokens(user.id, user.email);
+
     await this.updateRefreshToken(user.id, tokens.refreshToken);
+
     return Result.ok(tokens);
   }
 
   async updateRefreshToken(userId: string, refreshToken: string) {
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+
     await this.userRepository.update(userId, {
       hashedRefreshToken,
     });
