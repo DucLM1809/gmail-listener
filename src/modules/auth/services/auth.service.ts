@@ -13,13 +13,44 @@ import {
   InvalidCredentialsException,
 } from '../exceptions/auth.exceptions';
 import { ForbiddenException } from '@nestjs/common';
+import { google } from 'googleapis';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwt: JwtService,
     @Inject('IUserRepository') private userRepository: IUserRepository,
+    private configService: ConfigService,
   ) {}
+
+  async loginWithGoogleCode(code: string): Promise<Result<TokenResponse>> {
+    const oauth2Client = new google.auth.OAuth2(
+      this.configService.get('GOOGLE_CLIENT_ID'),
+      this.configService.get('GOOGLE_CLIENT_SECRET'),
+      'postmessage',
+    );
+
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({
+      auth: oauth2Client,
+      version: 'v2',
+    });
+
+    const { data } = await oauth2.userinfo.get();
+
+    const tokenResponse = await this.loginWithGoogle({
+      email: data.email,
+      name: data.name,
+      picture: data.picture,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+    });
+
+    return Result.ok(tokenResponse);
+  }
 
   async loginWithGoogle(googleUser: GoogleUserDto) {
     let user = await this.userRepository.findByEmail(googleUser.email);
@@ -122,7 +153,7 @@ export class AuthService {
           email,
         },
         {
-          secret: ' your_jwt_secret', // TODO: Move to env
+          secret: this.configService.get('JWT_SECRET'),
           expiresIn: '15m',
         },
       ),
@@ -132,7 +163,7 @@ export class AuthService {
           email,
         },
         {
-          secret: ' your_jwt_secret', // TODO: Move to env
+          secret: this.configService.get('JWT_SECRET'),
           expiresIn: '7d',
         },
       ),

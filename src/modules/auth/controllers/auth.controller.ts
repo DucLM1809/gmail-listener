@@ -40,6 +40,11 @@ export class AuthController extends BaseController {
     return this.handleResult(await this.authService.login(loginDto));
   }
 
+  @Post('google')
+  async googleLogin(@Body('code') code: string) {
+    return this.handleResult(await this.authService.loginWithGoogleCode(code));
+  }
+
   @UseGuards(RefreshTokenGuard)
   @Post('refresh')
   async refreshTokens(@Request() req) {
@@ -58,17 +63,5 @@ export class AuthController extends BaseController {
       return new HttpException(error.message, HttpStatus.UNAUTHORIZED);
     }
     return super.resolveError(error);
-  }
-
-  @Get()
-  @UseGuards(GoogleOAuthGuard)
-  async googleAuth() {}
-
-  @Get('google/callback')
-  @UseGuards(GoogleOAuthGuard)
-  async googleAuthRedirect(@Request() req, @Res() res: Response) {
-    const token = await this.authService.loginWithGoogle(req);
-
-    res.redirect(`${process.env.CLIENT_REDIRECT_URI}?token=${token}`);
   }
 }
