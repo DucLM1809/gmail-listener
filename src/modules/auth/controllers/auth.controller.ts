@@ -7,6 +7,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { AppLoggerService } from 'src/core/services/app-logger.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RegisterDto } from '../dto/auth/register.dto';
 import { LoginDto } from '../dto/auth/login.dto';
@@ -25,7 +26,10 @@ import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 @ApiTags('Auth')
 @Controller({ path: 'auth', version: '1' })
 export class AuthController extends BaseController {
-  constructor(private readonly authService: AuthService) {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly logger: AppLoggerService,
+  ) {
     super();
   }
 
@@ -41,6 +45,7 @@ export class AuthController extends BaseController {
     description: 'User already exists',
   })
   async register(@Body() registerDto: RegisterDto) {
+    this.logger.log('Register request received');
     return this.handleResult(await this.authService.register(registerDto));
   }
 
@@ -56,6 +61,7 @@ export class AuthController extends BaseController {
     description: 'Invalid credentials',
   })
   async login(@Body() loginDto: LoginDto) {
+    this.logger.log('Login request received');
     return this.handleResult(await this.authService.login(loginDto));
   }
 
@@ -67,6 +73,7 @@ export class AuthController extends BaseController {
     type: TokenResponseDto,
   })
   async googleLogin(@Body() googleLoginDto: GoogleLoginDto) {
+    this.logger.log('Google login request received');
     return this.handleResult(
       await this.authService.loginWithGoogleCode(googleLoginDto.code),
     );
@@ -85,6 +92,7 @@ export class AuthController extends BaseController {
     description: 'Invalid or expired refresh token',
   })
   async refreshTokens(@Request() req) {
+    this.logger.log('Refresh token request received');
     const userId = req.user['sub'];
     const refreshToken = req.user['refreshToken'];
     return this.handleResult(
@@ -93,6 +101,7 @@ export class AuthController extends BaseController {
   }
 
   protected resolveError(error: any): HttpException {
+    this.logger.error(error, 'Error resolving request');
     if (error instanceof UserAlreadyExistsException) {
       return new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }

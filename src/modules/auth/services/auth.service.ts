@@ -14,6 +14,7 @@ import {
 import { ForbiddenException } from '@nestjs/common';
 import { google } from 'googleapis';
 import { ConfigService } from '@nestjs/config';
+import { AppLoggerService } from 'src/core/services/app-logger.service';
 
 @Injectable()
 export class AuthService {
@@ -21,9 +22,11 @@ export class AuthService {
     private jwt: JwtService,
     @Inject('IUserRepository') private userRepository: IUserRepository,
     private configService: ConfigService,
+    private readonly logger: AppLoggerService,
   ) {}
 
   async loginWithGoogleCode(code: string): Promise<Result<TokenResponse>> {
+    this.logger.log({ code }, 'loginWithGoogleCode called');
     const oauth2Client = new google.auth.OAuth2(
       this.configService.get('GOOGLE_CLIENT_ID'),
       this.configService.get('GOOGLE_CLIENT_SECRET'),
@@ -52,6 +55,7 @@ export class AuthService {
   }
 
   async loginWithGoogle(googleUser: GoogleUserDto) {
+    this.logger.log({ email: googleUser.email }, 'loginWithGoogle called');
     let user = await this.userRepository.findByEmail(googleUser.email);
 
     if (!user) {
@@ -73,6 +77,7 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto): Promise<Result<TokenResponse>> {
+    this.logger.log({ email: registerDto.email }, 'register called');
     const existingUser = await this.userRepository.findByEmail(
       registerDto.email,
     );
@@ -94,6 +99,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<Result<TokenResponse>> {
+    this.logger.log({ email: loginDto.email }, 'login called');
     const user = await this.userRepository.findByEmail(loginDto.email);
     if (!user || !user.password) {
       return Result.fail(new InvalidCredentialsException());
@@ -116,6 +122,7 @@ export class AuthService {
     userId: string,
     refreshToken: string,
   ): Promise<Result<TokenResponse>> {
+    this.logger.log({ userId }, 'refreshTokens called');
     const user = await this.userRepository.findOne(userId);
     if (!user || !user.hashedRefreshToken) {
       throw new ForbiddenException('Access Denied');
