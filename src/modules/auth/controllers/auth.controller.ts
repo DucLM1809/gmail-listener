@@ -21,6 +21,7 @@ import {
 } from '../exceptions/auth.exceptions';
 
 import { BaseController } from 'src/core/base.controller';
+import { BaseErrorResponseDto } from 'src/core/dto/base-error-response.dto';
 import { RegisterResponseDto } from '../dto/auth/register-response.dto';
 import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 
@@ -44,6 +45,7 @@ export class AuthController extends BaseController {
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
     description: 'User already exists',
+    type: BaseErrorResponseDto,
   })
   async register(@Body() registerDto: RegisterDto) {
     this.logger.log('Register request received');
@@ -60,6 +62,7 @@ export class AuthController extends BaseController {
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid credentials',
+    type: BaseErrorResponseDto,
   })
   async login(@Body() loginDto: LoginDto) {
     this.logger.log('Login request received');
@@ -91,6 +94,7 @@ export class AuthController extends BaseController {
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid or expired refresh token',
+    type: BaseErrorResponseDto,
   })
   async refreshTokens(@Request() req) {
     this.logger.log('Refresh token request received');
