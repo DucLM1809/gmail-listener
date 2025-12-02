@@ -1,26 +1,27 @@
 import {
-  Controller,
-  Post,
   Body,
-  Request,
-  UseGuards,
+  Controller,
   HttpException,
   HttpStatus,
+  Post,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AppLoggerService } from 'src/core/services/app-logger.service';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { RegisterDto } from '../dto/auth/register.dto';
-import { LoginDto } from '../dto/auth/login.dto';
 import { GoogleLoginDto } from '../dto/auth/google-login.dto';
+import { LoginDto } from '../dto/auth/login.dto';
+import { RegisterDto } from '../dto/auth/register.dto';
 import { TokenResponseDto } from '../dto/auth/token-response.dto';
 import { AuthService } from '../services/auth.service';
 
 import {
-  UserAlreadyExistsException,
   InvalidCredentialsException,
+  UserAlreadyExistsException,
 } from '../exceptions/auth.exceptions';
 
 import { BaseController } from 'src/core/base.controller';
+import { RegisterResponseDto } from '../dto/auth/register-response.dto';
 import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 
 @ApiTags('Auth')
@@ -38,7 +39,7 @@ export class AuthController extends BaseController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'User successfully registered',
-    type: TokenResponseDto,
+    type: RegisterResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,

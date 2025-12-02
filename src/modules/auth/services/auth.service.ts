@@ -1,20 +1,20 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto } from '../dto/auth/register.dto';
-import { LoginDto } from '../dto/auth/login.dto';
-import { GoogleUserDto } from '../dto/auth/google-user.dto';
-import { TokenResponse } from '../interfaces/token.response';
-import { IUserRepository } from 'src/domain/repositories/user.repository.interface';
-import { Result } from 'src/core/result';
-import {
-  UserAlreadyExistsException,
-  InvalidCredentialsException,
-} from '../exceptions/auth.exceptions';
-import { ForbiddenException } from '@nestjs/common';
 import { google } from 'googleapis';
-import { ConfigService } from '@nestjs/config';
+import { Result } from 'src/core/result';
 import { AppLoggerService } from 'src/core/services/app-logger.service';
+import { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import { GoogleUserDto } from '../dto/auth/google-user.dto';
+import { LoginDto } from '../dto/auth/login.dto';
+import { RegisterResponseDto } from '../dto/auth/register-response.dto';
+import { RegisterDto } from '../dto/auth/register.dto';
+import {
+  InvalidCredentialsException,
+  UserAlreadyExistsException,
+} from '../exceptions/auth.exceptions';
+import { TokenResponse } from '../interfaces/token.response';
 
 @Injectable()
 export class AuthService {
@@ -78,7 +78,9 @@ export class AuthService {
     return this.getTokens(user.id, user.email);
   }
 
-  async register(registerDto: RegisterDto): Promise<Result<TokenResponse>> {
+  async register(
+    registerDto: RegisterDto,
+  ): Promise<Result<RegisterResponseDto>> {
     this.logger.log({ email: registerDto.email }, 'register called');
 
     const existingUser = await this.userRepository.findByEmail(
@@ -101,7 +103,12 @@ export class AuthService {
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
-    return Result.ok(tokens);
+    return Result.ok({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+    });
   }
 
   async login(loginDto: LoginDto): Promise<Result<TokenResponse>> {
