@@ -44,7 +44,12 @@ export class AuthController extends BaseController {
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'User already exists',
+    description: 'Validation failed or User already exists',
+    type: BaseErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Internal server error',
     type: BaseErrorResponseDto,
   })
   async register(@Body() registerDto: RegisterDto) {
@@ -64,6 +69,11 @@ export class AuthController extends BaseController {
     description: 'Invalid credentials',
     type: BaseErrorResponseDto,
   })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Internal server error',
+    type: BaseErrorResponseDto,
+  })
   async login(@Body() loginDto: LoginDto) {
     this.logger.log('Login request received');
     return this.handleResult(await this.authService.login(loginDto));
@@ -75,6 +85,11 @@ export class AuthController extends BaseController {
     status: HttpStatus.OK,
     description: 'User successfully logged in with Google',
     type: TokenResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Internal server error',
+    type: BaseErrorResponseDto,
   })
   async googleLogin(@Body() googleLoginDto: GoogleLoginDto) {
     this.logger.log('Google login request received');
@@ -94,6 +109,11 @@ export class AuthController extends BaseController {
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid or expired refresh token',
+    type: BaseErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Internal server error',
     type: BaseErrorResponseDto,
   })
   async refreshTokens(@Request() req) {
