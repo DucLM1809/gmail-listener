@@ -7,7 +7,12 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AppLoggerService } from 'src/core/services/app-logger.service';
 import { GoogleLoginDto } from '../dto/auth/google-login.dto';
 import { LoginDto } from '../dto/auth/login.dto';
@@ -24,6 +29,10 @@ import { BaseController } from 'src/core/base.controller';
 import { BaseErrorResponseDto } from 'src/core/dto/base-error-response.dto';
 import { RegisterResponseDto } from '../dto/auth/register-response.dto';
 import { RefreshTokenGuard } from '../guards/refresh-token.guard';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { TwoFactorGenerateResponseDto } from '../dto/auth/two-factor-generate-response.dto';
+import { TwoFactorEnableDto } from '../dto/auth/two-factor-enable.dto';
+import { TwoFactorRequiredException } from '../exceptions/auth.exceptions';
 
 @ApiTags('Auth')
 @Controller({ path: 'auth', version: '1' })
@@ -99,6 +108,7 @@ export class AuthController extends BaseController {
   }
 
   @UseGuards(RefreshTokenGuard)
+  @ApiBearerAuth()
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({
@@ -125,6 +135,37 @@ export class AuthController extends BaseController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('2fa/enable')
+  @ApiOperation({ summary: 'Enable 2FA (Generate Secret)' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: '2FA secret generated successfully',
+    type: TwoFactorGenerateResponseDto,
+  })
+  async enableTwoFactor(@Request() req) {
+    const userId = req.user['userId'];
+    const email = req.user['email'];
+    return await this.authService.enableTwoFactor(userId, email);
+  }
+
+  @Post('2fa/verify')
+  @ApiOperation({ summary: 'Verify 2FA Code' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '2FA verified and enabled successfully',
+    type: TokenResponseDto,
+  })
+  async verifyTwoFactor(@Body() twoFactorEnableDto: TwoFactorEnableDto) {
+    return this.handleResult(
+      await this.authService.verifyTwoFactor(
+        twoFactorEnableDto.email,
+        twoFactorEnableDto.twoFactorCode,
+      ),
+    );
+  }
+
   protected resolveError(error: any): HttpException {
     this.logger.error(error, 'Error resolving request');
     if (error instanceof UserAlreadyExistsException) {
@@ -132,6 +173,16 @@ export class AuthController extends BaseController {
     }
     if (error instanceof InvalidCredentialsException) {
       return new HttpException(error.message, HttpStatus.UNAUTHORIZED);
+    }
+    if (error instanceof TwoFactorRequiredException) {
+      return new HttpException(
+        {
+          statusCode: HttpStatus.FORBIDDEN,
+          message: error.message,
+          error: 'TwoFactorRequired',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
     return super.resolveError(error);
   }

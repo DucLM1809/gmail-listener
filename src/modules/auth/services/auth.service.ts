@@ -13,8 +13,12 @@ import { RegisterDto } from '../dto/auth/register.dto';
 import {
   InvalidCredentialsException,
   UserAlreadyExistsException,
+  TwoFactorRequiredException,
 } from '../exceptions/auth.exceptions';
 import { TokenResponse } from '../interfaces/token.response';
+import { authenticator } from 'otplib';
+import { toDataURL } from 'qrcode';
+import { TwoFactorGenerateResponseDto } from '../dto/auth/two-factor-generate-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -67,15 +71,17 @@ export class AuthService {
         picture: googleUser.picture,
         accessToken: googleUser.accessToken,
         refreshToken: googleUser.refreshToken,
+        isTwoFactorEnabled: true,
       });
     } else {
       await this.userRepository.update(user.id, {
         accessToken: googleUser.accessToken,
         refreshToken: googleUser.refreshToken,
+        isTwoFactorEnabled: true,
       });
     }
 
-    return this.getTokens(user.id, user.email);
+    return this.getTokens(user.id, user.email, true);
   }
 
   async register(
@@ -99,7 +105,7 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const tokens = await this.getTokens(user.id, user.email);
+    const tokens = await this.getTokens(user.id, user.email, false);
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -129,8 +135,58 @@ export class AuthService {
       return Result.fail(new InvalidCredentialsException());
     }
 
-    const tokens = await this.getTokens(user.id, user.email);
+    if (user.isTwoFactorEnabled) {
+      return Result.fail(new TwoFactorRequiredException());
+    }
 
+    const tokens = await this.getTokens(user.id, user.email, true);
+
+    await this.updateRefreshToken(user.id, tokens.refreshToken);
+
+    return Result.ok(tokens);
+  }
+
+  async enableTwoFactor(
+    userId: string,
+    email: string,
+  ): Promise<TwoFactorGenerateResponseDto> {
+    const secret = authenticator.generateSecret();
+    const otpauthUrl = authenticator.keyuri(email, 'Gmail Listener', secret);
+    const qrCodeUrl = await toDataURL(otpauthUrl);
+
+    await this.userRepository.update(userId, {
+      twoFactorSecret: secret,
+    });
+
+    return {
+      qrCodeUrl,
+    };
+  }
+
+  async verifyTwoFactor(
+    email: string,
+    twoFactorCode: string,
+  ): Promise<Result<TokenResponse>> {
+    const user = await this.userRepository.findByEmail(email);
+
+    if (!user || !user.twoFactorSecret) {
+      return Result.fail(new ForbiddenException('2FA secret not generated'));
+    }
+
+    const isValid = authenticator.verify({
+      token: twoFactorCode,
+      secret: user.twoFactorSecret,
+    });
+
+    if (!isValid) {
+      return Result.fail(new ForbiddenException('Invalid 2FA code'));
+    }
+
+    await this.userRepository.update(user.id, {
+      isTwoFactorEnabled: true,
+    });
+
+    const tokens = await this.getTokens(user.id, user.email, true);
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
     return Result.ok(tokens);
@@ -145,7 +201,7 @@ export class AuthService {
     const user = await this.userRepository.findOne(userId);
 
     if (!user || !user.hashedRefreshToken) {
-      throw new ForbiddenException('Access Denied');
+      return Result.fail(new ForbiddenException('Access Denied'));
     }
 
     const refreshTokenMatches = await bcrypt.compare(
@@ -154,10 +210,10 @@ export class AuthService {
     );
 
     if (!refreshTokenMatches) {
-      throw new ForbiddenException('Access Denied');
+      return Result.fail(new ForbiddenException('Access Denied'));
     }
 
-    const tokens = await this.getTokens(user.id, user.email);
+    const tokens = await this.getTokens(user.id, user.email, true);
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -175,12 +231,14 @@ export class AuthService {
   private async getTokens(
     userId: string,
     email: string,
+    isTwoFactorAuthenticated: boolean,
   ): Promise<TokenResponse> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwt.signAsync(
         {
           sub: userId,
           email,
+          isTwoFactorAuthenticated,
         },
         {
           secret: this.configService.get('JWT_SECRET'),
@@ -191,6 +249,7 @@ export class AuthService {
         {
           sub: userId,
           email,
+          isTwoFactorAuthenticated,
         },
         {
           secret: this.configService.get('JWT_SECRET'),

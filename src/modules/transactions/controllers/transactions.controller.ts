@@ -8,7 +8,8 @@ export class TransactionsController {
 
   @Get('vcb/today')
   async getTodayTransactions() {
-    const vcbTransactions = await this.transactionsService.getTodayVcbTransactions();
+    const vcbTransactions =
+      await this.transactionsService.getTodayVcbTransactions();
     const vcbDigitalTransactions =
       await this.transactionsService.getTodayVcbDigitalTransactions();
 

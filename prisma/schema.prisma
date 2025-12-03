@@ -38,6 +38,8 @@ model User {
   accessToken        String?
   refreshToken       String?
   hashedRefreshToken String?
+  twoFactorSecret    String?
+  isTwoFactorEnabled Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
