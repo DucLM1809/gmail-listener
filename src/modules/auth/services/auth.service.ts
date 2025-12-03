@@ -13,9 +13,8 @@ import { RegisterDto } from '../dto/auth/register.dto';
 import {
   InvalidCredentialsException,
   UserAlreadyExistsException,
-  TwoFactorRequiredException,
 } from '../exceptions/auth.exceptions';
-import { TokenResponse } from '../interfaces/token.response';
+import { LoginResponse, TokenResponse } from '../interfaces/token.response';
 import { authenticator } from 'otplib';
 import { toDataURL } from 'qrcode';
 import { TwoFactorGenerateResponseDto } from '../dto/auth/two-factor-generate-response.dto';
@@ -117,7 +116,7 @@ export class AuthService {
     });
   }
 
-  async login(loginDto: LoginDto): Promise<Result<TokenResponse>> {
+  async login(loginDto: LoginDto): Promise<Result<LoginResponse>> {
     this.logger.log({ email: loginDto.email }, 'login called');
 
     const user = await this.userRepository.findByEmail(loginDto.email);
@@ -135,21 +134,28 @@ export class AuthService {
       return Result.fail(new InvalidCredentialsException());
     }
 
-    if (user.isTwoFactorEnabled) {
-      return Result.fail(new TwoFactorRequiredException());
-    }
-
     const tokens = await this.getTokens(user.id, user.email, true);
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
-    return Result.ok(tokens);
+    return Result.ok({
+      ...tokens,
+      isTwoFactorEnabled: user.isTwoFactorEnabled,
+    });
   }
 
   async enableTwoFactor(
     userId: string,
     email: string,
-  ): Promise<TwoFactorGenerateResponseDto> {
+  ): Promise<Result<TwoFactorGenerateResponseDto>> {
+    const user = await this.userRepository.findByEmail(email);
+
+    if (user && user.isTwoFactorEnabled) {
+      return Result.ok({
+        qrCodeUrl: '',
+      });
+    }
+
     const secret = authenticator.generateSecret();
     const otpauthUrl = authenticator.keyuri(email, 'Gmail Listener', secret);
     const qrCodeUrl = await toDataURL(otpauthUrl);
@@ -158,9 +164,9 @@ export class AuthService {
       twoFactorSecret: secret,
     });
 
-    return {
+    return Result.ok({
       qrCodeUrl,
-    };
+    });
   }
 
   async verifyTwoFactor(

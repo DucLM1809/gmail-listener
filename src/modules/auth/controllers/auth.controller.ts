@@ -147,9 +147,13 @@ export class AuthController extends BaseController {
   async enableTwoFactor(@Request() req) {
     const userId = req.user['userId'];
     const email = req.user['email'];
-    return await this.authService.enableTwoFactor(userId, email);
+    return this.handleResult(
+      await this.authService.enableTwoFactor(userId, email),
+    );
   }
 
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @Post('2fa/verify')
   @ApiOperation({ summary: 'Verify 2FA Code' })
   @ApiResponse({
@@ -157,10 +161,15 @@ export class AuthController extends BaseController {
     description: '2FA verified and enabled successfully',
     type: TokenResponseDto,
   })
-  async verifyTwoFactor(@Body() twoFactorEnableDto: TwoFactorEnableDto) {
+  async verifyTwoFactor(
+    @Request() req,
+    @Body() twoFactorEnableDto: TwoFactorEnableDto,
+  ) {
+    const email = req.user['email'];
+
     return this.handleResult(
       await this.authService.verifyTwoFactor(
-        twoFactorEnableDto.email,
+        email,
         twoFactorEnableDto.twoFactorCode,
       ),
     );
