@@ -4,7 +4,6 @@ import {
   HttpException,
   HttpStatus,
   Post,
-  Request,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -38,6 +37,7 @@ import { TwoFactorEnableDto } from '../dto/auth/two-factor-enable.dto';
 import { TwoFactorRequiredException } from '../exceptions/auth.exceptions';
 import { ForgotPasswordDto } from '../dto/auth/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/auth/reset-password.dto';
+import { User } from 'src/core/decorators/user.decorator';
 
 @ApiTags('Auth')
 @Controller({ path: 'auth', version: '1' })
@@ -131,10 +131,10 @@ export class AuthController extends BaseController {
     description: 'Internal server error',
     type: BaseErrorResponseDto,
   })
-  async refreshTokens(@Request() req) {
+  async refreshTokens(@User() user) {
     this.logger.log('Refresh token request received');
-    const userId = req.user['sub'];
-    const refreshToken = req.user['refreshToken'];
+    const userId = user['sub'];
+    const refreshToken = user['refreshToken'];
     return this.handleResult(
       await this.authService.refreshTokens(userId, refreshToken),
     );
@@ -149,9 +149,9 @@ export class AuthController extends BaseController {
     description: '2FA secret generated successfully',
     type: TwoFactorGenerateResponseDto,
   })
-  async enableTwoFactor(@Request() req) {
-    const userId = req.user['userId'];
-    const email = req.user['email'];
+  async enableTwoFactor(@User() user) {
+    const userId = user['userId'];
+    const email = user['email'];
     return this.handleResult(
       await this.authService.enableTwoFactor(userId, email),
     );
@@ -167,10 +167,10 @@ export class AuthController extends BaseController {
     type: TokenResponseDto,
   })
   async verifyTwoFactor(
-    @Request() req,
+    @User() user,
     @Body() twoFactorEnableDto: TwoFactorEnableDto,
   ) {
-    const email = req.user['email'];
+    const email = user['email'];
 
     return this.handleResult(
       await this.authService.verifyTwoFactor(

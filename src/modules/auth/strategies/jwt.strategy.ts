@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import { UserSession } from 'src/core/interfaces/user-session.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -17,7 +18,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
+  async validate(
+    payload: any,
+  ): Promise<Pick<UserSession, 'userId' | 'email' | 'role'>> {
     const user = await this.userRepository.findOne(payload.sub);
 
     if (!user) {
