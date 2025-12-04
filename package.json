@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^10.0.0",
@@ -30,6 +31,8 @@
     "@nestjs/swagger": "^11.2.3",
     "@prisma/adapter-pg": "^7.0.1",
     "@prisma/client": "^6.16.2",
+    "@react-email/components": "^1.0.1",
+    "@react-email/render": "^2.0.0",
     "@types/bcrypt": "^6.0.0",
     "@types/passport-jwt": "^4.0.1",
     "bcrypt": "^6.0.0",
@@ -37,8 +40,10 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "googleapis": "^166.0.0",
+    "handlebars": "^4.7.8",
     "moment": "^2.30.1",
     "nestjs-pino": "^4.5.0",
+    "nodemailer": "^7.0.11",
     "otplib": "^12.0.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
@@ -48,6 +53,8 @@
     "pino-pretty": "^13.1.2",
     "prisma": "^6.16.2",
     "qrcode": "^1.5.4",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1"
@@ -59,9 +66,12 @@
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",
+    "@types/nodemailer": "^7.0.4",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/pg": "^8.15.6",
     "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
@@ -93,6 +103,9 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    }
   }
 }

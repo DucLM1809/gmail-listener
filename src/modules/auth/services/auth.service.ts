@@ -3,29 +3,35 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { google } from 'googleapis';
+import { authenticator } from 'otplib';
+import { toDataURL } from 'qrcode';
 import { Result } from 'src/core/result';
 import { AppLoggerService } from 'src/core/services/app-logger.service';
 import { IUserRepository } from 'src/domain/repositories/user.repository.interface';
+import { EmailService } from 'src/modules/email/email.service';
 import { GoogleUserDto } from '../dto/auth/google-user.dto';
 import { LoginDto } from '../dto/auth/login.dto';
 import { RegisterResponseDto } from '../dto/auth/register-response.dto';
 import { RegisterDto } from '../dto/auth/register.dto';
+import { TwoFactorGenerateResponseDto } from '../dto/auth/two-factor-generate-response.dto';
 import {
   InvalidCredentialsException,
+  InvalidTokenException,
+  InvalidTokenTypeException,
+  PasswordReuseException,
   UserAlreadyExistsException,
 } from '../exceptions/auth.exceptions';
 import { LoginResponse, TokenResponse } from '../interfaces/token.response';
-import { authenticator } from 'otplib';
-import { toDataURL } from 'qrcode';
-import { TwoFactorGenerateResponseDto } from '../dto/auth/two-factor-generate-response.dto';
+import { TokenService } from './token.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private jwt: JwtService,
     @Inject('IUserRepository') private userRepository: IUserRepository,
     private configService: ConfigService,
     private readonly logger: AppLoggerService,
+    private readonly emailService: EmailService,
+    private readonly tokenService: TokenService,
   ) {}
 
   async loginWithGoogleCode(code: string): Promise<Result<TokenResponse>> {
@@ -240,33 +246,83 @@ export class AuthService {
     isTwoFactorAuthenticated: boolean,
   ): Promise<TokenResponse> {
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwt.signAsync(
-        {
-          sub: userId,
-          email,
-          isTwoFactorAuthenticated,
-        },
-        {
-          secret: this.configService.get('JWT_SECRET'),
-          expiresIn: '15m',
-        },
-      ),
-      this.jwt.signAsync(
-        {
-          sub: userId,
-          email,
-          isTwoFactorAuthenticated,
-        },
-        {
-          secret: this.configService.get('JWT_SECRET'),
-          expiresIn: '7d',
-        },
-      ),
+      this.tokenService.generateToken({
+        sub: userId,
+        email,
+        isTwoFactorAuthenticated,
+      }),
+      this.tokenService.generateToken({
+        sub: userId,
+        email,
+        isTwoFactorAuthenticated,
+      }),
     ]);
 
     return {
       accessToken,
       refreshToken,
     };
+  }
+
+  async forgotPassword(email: string): Promise<Result<boolean>> {
+    const user = await this.userRepository.findByEmail(email);
+
+    if (!user) {
+      return Result.fail(new InvalidCredentialsException());
+    }
+
+    const token = await this.tokenService.generateToken({
+      sub: user.id,
+      email: user.email,
+      type: 'reset-password',
+    });
+
+    // Send email
+    const resetLink = `${this.configService.get('CLIENT_REDIRECT_URI')}/reset-password?token=${token}`;
+
+    await this.emailService.sendTemplateEmail(
+      user.email,
+      'Password Reset Request',
+      'reset-password',
+      { resetLink },
+    );
+
+    return Result.ok(true);
+  }
+
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<Result<boolean>> {
+    const payload = await this.tokenService.verifyToken(token);
+
+    if (!payload) {
+      return Result.fail(new InvalidTokenException());
+    }
+
+    if (payload.type !== 'reset-password') {
+      return Result.fail(new InvalidTokenTypeException());
+    }
+
+    const user = await this.userRepository.findOne(payload.sub);
+
+    if (!user) {
+      return Result.fail(new InvalidCredentialsException());
+    }
+
+    if (user.password) {
+      const isSamePassword = await bcrypt.compare(newPassword, user.password);
+
+      if (isSamePassword) {
+        return Result.fail(new PasswordReuseException());
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.userRepository.update(user.id, {
+      password: hashedPassword,
+    });
+
+    return Result.ok(true);
   }
 }

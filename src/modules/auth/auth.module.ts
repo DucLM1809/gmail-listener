@@ -9,10 +9,13 @@ import { GoogleStrategy } from './strategies/google-oauth.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { UserRepository } from 'src/infrastructure/repositories/user.repository';
+import { EmailModule } from '../email/email.module';
+import { TokenService } from './services/token.service';
 
 @Module({
   imports: [
     PrismaModule,
+    EmailModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -24,6 +27,7 @@ import { UserRepository } from 'src/infrastructure/repositories/user.repository'
   controllers: [AuthController],
   providers: [
     AuthService,
+    TokenService,
     GoogleStrategy,
     JwtStrategy,
     RefreshTokenStrategy,

@@ -20,3 +20,24 @@ export class UserAlreadyExistsException extends AppException {
     this.name = 'UserAlreadyExistsException';
   }
 }
+
+export class PasswordReuseException extends AppException {
+  constructor() {
+    super('New password cannot be the same as the old password');
+    this.name = 'PasswordReuseException';
+  }
+}
+
+export class InvalidTokenException extends AppException {
+  constructor() {
+    super('Invalid or expired token');
+    this.name = 'InvalidTokenException';
+  }
+}
+
+export class InvalidTokenTypeException extends AppException {
+  constructor() {
+    super('Invalid token type');
+    this.name = 'InvalidTokenTypeException';
+  }
+}

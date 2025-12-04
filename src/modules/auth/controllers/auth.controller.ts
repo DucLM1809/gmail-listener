@@ -33,6 +33,8 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { TwoFactorGenerateResponseDto } from '../dto/auth/two-factor-generate-response.dto';
 import { TwoFactorEnableDto } from '../dto/auth/two-factor-enable.dto';
 import { TwoFactorRequiredException } from '../exceptions/auth.exceptions';
+import { ForgotPasswordDto } from '../dto/auth/forgot-password.dto';
+import { ResetPasswordDto } from '../dto/auth/reset-password.dto';
 
 @ApiTags('Auth')
 @Controller({ path: 'auth', version: '1' })
@@ -171,6 +173,33 @@ export class AuthController extends BaseController {
       await this.authService.verifyTwoFactor(
         email,
         twoFactorEnableDto.twoFactorCode,
+      ),
+    );
+  }
+
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password reset token generated',
+  })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.handleResult(
+      await this.authService.forgotPassword(forgotPasswordDto.email),
+    );
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password successfully reset',
+  })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.handleResult(
+      await this.authService.resetPassword(
+        resetPasswordDto.token,
+        resetPasswordDto.newPassword,
       ),
     );
   }
