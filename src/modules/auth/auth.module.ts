@@ -12,6 +12,8 @@ import { UserRepository } from 'src/infrastructure/repositories/user.repository'
 import { EmailModule } from '../email/email.module';
 import { TokenService } from './services/token.service';
 
+import { RolesGuard } from './guards/roles.guard';
+
 @Module({
   imports: [
     PrismaModule,
@@ -32,7 +34,9 @@ import { TokenService } from './services/token.service';
     JwtStrategy,
     RefreshTokenStrategy,
     GoogleOAuthGuard,
+    RolesGuard,
     { provide: 'IUserRepository', useClass: UserRepository },
   ],
+  exports: [RolesGuard],
 })
 export class AuthModule {}
