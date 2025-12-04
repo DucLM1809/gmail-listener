@@ -9,6 +9,7 @@ import { GmailModule } from './modules/gmail/gmail.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { CoreModule } from './core/core.module';
 import { EmailModule } from './modules/email/email.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { EmailModule } from './modules/email/email.module';
     TransactionsModule,
     AuthModule,
     EmailModule,
+    UserModule,
   ],
 })
 export class AppModule {}
