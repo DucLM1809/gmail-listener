@@ -22,6 +22,9 @@ import { AuthService } from '../services/auth.service';
 
 import {
   InvalidCredentialsException,
+  InvalidTokenException,
+  InvalidTokenTypeException,
+  PasswordReuseException,
   UserAlreadyExistsException,
 } from '../exceptions/auth.exceptions';
 
@@ -209,9 +212,11 @@ export class AuthController extends BaseController {
     if (error instanceof UserAlreadyExistsException) {
       return new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
+
     if (error instanceof InvalidCredentialsException) {
       return new HttpException(error.message, HttpStatus.UNAUTHORIZED);
     }
+
     if (error instanceof TwoFactorRequiredException) {
       return new HttpException(
         {
@@ -222,6 +227,19 @@ export class AuthController extends BaseController {
         HttpStatus.FORBIDDEN,
       );
     }
+
+    if (error instanceof InvalidTokenException) {
+      return new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+
+    if (error instanceof InvalidTokenTypeException) {
+      return new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+
+    if (error instanceof PasswordReuseException) {
+      return new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+
     return super.resolveError(error);
   }
 }

@@ -1,6 +1,5 @@
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { google } from 'googleapis';
 import { authenticator } from 'otplib';
@@ -278,7 +277,7 @@ export class AuthService {
     });
 
     // Send email
-    const resetLink = `${this.configService.get('CLIENT_REDIRECT_URI')}/reset-password?token=${token}`;
+    const resetLink = `${this.configService.get('CLIENT_URI')}/auth/reset-password?token=${token}`;
 
     await this.emailService.sendTemplateEmail(
       user.email,
