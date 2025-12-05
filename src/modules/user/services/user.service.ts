@@ -27,6 +27,22 @@ export class UserService {
       role: {
         equals: Role.User,
       },
+      ...(pageOptionsDto.q && {
+        OR: [
+          {
+            email: {
+              contains: pageOptionsDto.q,
+              mode: 'insensitive',
+            },
+          },
+          {
+            name: {
+              contains: pageOptionsDto.q,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      }),
     };
 
     const [users, itemCount] = await this.prismaService.$transaction([
@@ -60,17 +76,16 @@ export class UserService {
   async findAllRawQuery(
     pageOptionsDto: PageOptionsDto,
   ): Promise<Result<PageDto<UserResponseDto>>> {
-    const where: Prisma.UserWhereInput = {
-      role: {
-        equals: Role.User,
-      },
-    };
-
     const [users, totalResult] = await Promise.all([
       this.prismaService.$queryRaw<User[]>`
       SELECT id, email, name, picture, role
       FROM "User"
       WHERE role = ${Role.User}
+      ${
+        pageOptionsDto.q
+          ? Prisma.sql`AND (email ILIKE ${`%${pageOptionsDto.q}%`} OR name ILIKE ${`%${pageOptionsDto.q}%`})`
+          : Prisma.empty
+      }
       ORDER BY "createdAt" DESC
       LIMIT ${pageOptionsDto.take} OFFSET ${pageOptionsDto.skip}
     `,
@@ -78,6 +93,11 @@ export class UserService {
       SELECT COUNT(*)::int as count
       FROM "User"
       WHERE role = ${Role.User}
+      ${
+        pageOptionsDto.q
+          ? Prisma.sql`AND (email ILIKE ${`%${pageOptionsDto.q}%`} OR name ILIKE ${`%${pageOptionsDto.q}%`})`
+          : Prisma.empty
+      }
     `,
     ]);
 
