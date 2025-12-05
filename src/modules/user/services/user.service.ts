@@ -25,7 +25,7 @@ export class UserService {
   ): Promise<Result<PageDto<UserResponseDto>>> {
     const where: Prisma.UserWhereInput = {
       role: {
-        equals: Role.User,
+        not: Role.Admin,
       },
       ...(pageOptionsDto.q && {
         OR: [
