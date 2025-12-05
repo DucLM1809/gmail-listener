@@ -3,7 +3,9 @@ import { IGenericRepository } from './generic.repository';
 
 export interface IUserRepository
   extends Omit<IGenericRepository<User>, 'create' | 'update'> {
-  findByEmail(email: string): Promise<User | null>;
-  create(data: Prisma.UserCreateInput): Promise<User>;
-  update(id: string, data: Prisma.UserUpdateInput): Promise<User>;
+  findAll(params?: Prisma.UserFindManyArgs): Prisma.PrismaPromise<User[]>;
+  count(params?: Prisma.UserCountArgs): Prisma.PrismaPromise<number>;
+  findByEmail(email: string): Prisma.PrismaPromise<User | null>;
+  create(data: Prisma.UserCreateInput): Prisma.PrismaPromise<User>;
+  update(id: string, data: Prisma.UserUpdateInput): Prisma.PrismaPromise<User>;
 }

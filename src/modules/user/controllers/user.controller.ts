@@ -7,9 +7,15 @@ import {
   HttpStatus,
   Param,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { BaseController } from 'src/core/base.controller';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../auth/enums/role.enum';
@@ -18,8 +24,13 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserNotFoundException } from '../exceptions/user.exceptions';
 import { UserService } from '../services/user.service';
+import { PageOptionsDto } from 'src/core/dto/page-options.dto';
+import { PageDto } from 'src/core/dto/page.dto';
+import { User } from 'generated/prisma/client';
+import { UserResponseDto } from '../dto/user-response.dto';
 
 @ApiTags('Users')
+@ApiBearerAuth()
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.Admin)
@@ -30,13 +41,22 @@ export class UserController extends BaseController {
 
   @Get()
   @ApiOperation({ summary: 'Get all users' })
-  async findAll() {
-    const result = await this.userService.findAll();
-    return this.handleResult(result);
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Return all users',
+    type: PageDto<UserResponseDto>,
+  })
+  async findAll(@Query() pageOptionsDto: PageOptionsDto) {
+    return this.handleResult(await this.userService.findAll(pageOptionsDto));
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user by id' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Return user by id',
+    type: UserResponseDto,
+  })
   async findOne(@Param('id') id: string) {
     const result = await this.userService.findOne(id);
     return this.handleResult(result);

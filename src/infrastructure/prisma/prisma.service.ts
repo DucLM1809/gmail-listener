@@ -5,7 +5,9 @@ import { PrismaClient } from 'generated/prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
-    super();
+    super({
+      log: ['query'],
+    });
   }
 
   async onModuleInit() {

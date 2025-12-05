@@ -10,7 +10,15 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+      whitelist: true,
+    }),
+  );
   app.useGlobalFilters(new GlobalExceptionFilter(app.get(AppLoggerService)));
   app.enableCors({
     origin: 'http://localhost:3000',

@@ -13,15 +13,15 @@ export class UserRepository
     super(prisma, 'user');
   }
 
-  async create(data: Prisma.UserCreateInput): Promise<User> {
+  create(data: Prisma.UserCreateInput): Prisma.PrismaPromise<User> {
     return super.create(data);
   }
 
-  async update(id: string, data: Prisma.UserUpdateInput): Promise<User> {
+  update(id: string, data: Prisma.UserUpdateInput): Prisma.PrismaPromise<User> {
     return super.update(id, data);
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  findByEmail(email: string): Prisma.PrismaPromise<User | null> {
     return this.prisma.user.findUnique({
       where: { email },
     });

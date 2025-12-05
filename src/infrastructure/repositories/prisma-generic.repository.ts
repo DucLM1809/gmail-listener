@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { IGenericRepository } from '../../domain/repositories/generic.repository';
+import { Prisma } from 'generated/prisma/client';
 
 @Injectable()
 export abstract class PrismaGenericRepository<T>
@@ -11,32 +12,36 @@ export abstract class PrismaGenericRepository<T>
     protected readonly modelName: string,
   ) {}
 
-  async findAll(params?: any): Promise<T[]> {
+  findAll(params?: any): Prisma.PrismaPromise<T[]> {
     return (this.prisma as any)[this.modelName].findMany(params);
   }
 
-  async findOne(id: string | number): Promise<T | null> {
+  findOne(id: string | number): Prisma.PrismaPromise<T | null> {
     return (this.prisma as any)[this.modelName].findUnique({
       where: { id },
     });
   }
 
-  async create(data: any): Promise<T> {
+  create(data: any): Prisma.PrismaPromise<T> {
     return (this.prisma as any)[this.modelName].create({
       data,
     });
   }
 
-  async update(id: string | number, data: any): Promise<T> {
+  update(id: string | number, data: any): Prisma.PrismaPromise<T> {
     return (this.prisma as any)[this.modelName].update({
       where: { id },
       data,
     });
   }
 
-  async delete(id: string | number): Promise<T> {
+  delete(id: string | number): Prisma.PrismaPromise<T> {
     return (this.prisma as any)[this.modelName].delete({
       where: { id },
     });
+  }
+
+  count(params?: any): Prisma.PrismaPromise<number> {
+    return (this.prisma as any)[this.modelName].count(params);
   }
 }

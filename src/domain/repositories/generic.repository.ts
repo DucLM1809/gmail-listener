@@ -4,4 +4,5 @@ export interface IGenericRepository<T> {
   create(data: any): Promise<T>;
   update(id: string | number, data: any): Promise<T>;
   delete(id: string | number): Promise<T>;
+  count(params?: any): Promise<number>;
 }
