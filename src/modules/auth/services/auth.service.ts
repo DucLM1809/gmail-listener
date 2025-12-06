@@ -22,6 +22,7 @@ import {
 } from '../exceptions/auth.exceptions';
 import { LoginResponse, TokenResponse } from '../interfaces/token.response';
 import { TokenService } from './token.service';
+import { UserSession } from 'src/core/interfaces/user-session.interface';
 
 @Injectable()
 export class AuthService {
@@ -159,7 +160,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
       },
-      true,
+      false,
     );
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
@@ -275,11 +276,7 @@ export class AuthService {
   }
 
   private async getTokens(
-    payload: {
-      userId: string;
-      email: string;
-      role: number;
-    },
+    payload: UserSession,
     isTwoFactorAuthenticated: boolean,
   ): Promise<TokenResponse> {
     const { userId, email, role } = payload;

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { UserSession } from 'src/core/interfaces/user-session.interface';
 
 @Injectable()
 export class TokenService {
@@ -9,13 +10,7 @@ export class TokenService {
     private configService: ConfigService,
   ) {}
 
-  async generateToken(payload: {
-    userId: string;
-    email: string;
-    role?: number;
-    isTwoFactorAuthenticated?: boolean;
-    type?: string;
-  }) {
+  async generateToken(payload: UserSession) {
     return await this.jwt.signAsync(payload, {
       secret: this.configService.get('JWT_SECRET'),
       expiresIn: this.configService.get('JWT_EXPIRES_IN'),

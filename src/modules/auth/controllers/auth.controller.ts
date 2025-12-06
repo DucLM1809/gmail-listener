@@ -38,6 +38,7 @@ import { TwoFactorRequiredException } from '../exceptions/auth.exceptions';
 import { ForgotPasswordDto } from '../dto/auth/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/auth/reset-password.dto';
 import { User } from 'src/core/decorators/user.decorator';
+import { UserSession } from 'src/core/interfaces/user-session.interface';
 
 @ApiTags('Auth')
 @Controller({ path: 'auth', version: '1' })
@@ -131,10 +132,10 @@ export class AuthController extends BaseController {
     description: 'Internal server error',
     type: BaseErrorResponseDto,
   })
-  async refreshTokens(@User() user) {
+  async refreshTokens(@User() user: UserSession) {
     this.logger.log('Refresh token request received');
-    const userId = user['sub'];
-    const refreshToken = user['refreshToken'];
+    const userId = user.userId;
+    const refreshToken = user.refreshToken;
     return this.handleResult(
       await this.authService.refreshTokens(userId, refreshToken),
     );
@@ -149,9 +150,9 @@ export class AuthController extends BaseController {
     description: '2FA secret generated successfully',
     type: TwoFactorGenerateResponseDto,
   })
-  async enableTwoFactor(@User() user) {
-    const userId = user['userId'];
-    const email = user['email'];
+  async enableTwoFactor(@User() user: UserSession) {
+    const userId = user.userId;
+    const email = user.email;
     return this.handleResult(
       await this.authService.enableTwoFactor(userId, email),
     );
@@ -167,10 +168,10 @@ export class AuthController extends BaseController {
     type: TokenResponseDto,
   })
   async verifyTwoFactor(
-    @User() user,
+    @User() user: UserSession,
     @Body() twoFactorEnableDto: TwoFactorEnableDto,
   ) {
-    const email = user['email'];
+    const email = user.email;
 
     return this.handleResult(
       await this.authService.verifyTwoFactor(

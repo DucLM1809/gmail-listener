@@ -19,9 +19,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(
-    payload: any,
+    payload: UserSession,
   ): Promise<Pick<UserSession, 'userId' | 'email' | 'role'>> {
-    const user = await this.userRepository.findOne(payload.sub);
+    const user = await this.userRepository.findOne(payload.userId);
 
     if (!user) {
       throw new UnauthorizedException();
@@ -33,6 +33,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
     }
 
-    return { userId: payload.sub, email: payload.email, role: user.role };
+    return { userId: payload.userId, email: payload.email, role: user.role };
   }
 }
