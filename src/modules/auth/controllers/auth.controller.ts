@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Post,
   UseGuards,
+  Get,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -13,10 +14,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AppLoggerService } from 'src/core/services/app-logger.service';
-import { GoogleLoginDto } from '../dto/auth/google-login.dto';
-import { LoginDto } from '../dto/auth/login.dto';
-import { RegisterDto } from '../dto/auth/register.dto';
-import { TokenResponseDto } from '../dto/auth/token-response.dto';
+import { GoogleLoginDto } from '../dto/google-login.dto';
+import { LoginDto } from '../dto/login.dto';
+import { RegisterDto } from '../dto/register.dto';
+import { TokenResponseDto } from '../dto/token-response.dto';
 import { AuthService } from '../services/auth.service';
 
 import {
@@ -29,14 +30,15 @@ import {
 
 import { BaseController } from 'src/core/base.controller';
 import { BaseErrorResponseDto } from 'src/core/dto/base-error-response.dto';
-import { RegisterResponseDto } from '../dto/auth/register-response.dto';
+import { RegisterResponseDto } from '../dto/register-response.dto';
 import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
-import { TwoFactorGenerateResponseDto } from '../dto/auth/two-factor-generate-response.dto';
-import { TwoFactorEnableDto } from '../dto/auth/two-factor-enable.dto';
+import { TwoFactorGenerateResponseDto } from '../dto/two-factor-generate-response.dto';
+import { TwoFactorEnableDto } from '../dto/two-factor-enable.dto';
 import { TwoFactorRequiredException } from '../exceptions/auth.exceptions';
-import { ForgotPasswordDto } from '../dto/auth/forgot-password.dto';
-import { ResetPasswordDto } from '../dto/auth/reset-password.dto';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { UserProfileDto } from '../dto/user-profile.dto';
 import { User } from 'src/core/decorators/user.decorator';
 import { UserSession } from 'src/core/interfaces/user-session.interface';
 
@@ -139,6 +141,19 @@ export class AuthController extends BaseController {
     return this.handleResult(
       await this.authService.refreshTokens(userId, refreshToken),
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User profile retrieved successfully',
+    type: UserProfileDto,
+  })
+  async getProfile(@User() user: UserSession) {
+    return this.handleResult(await this.authService.getProfile(user.userId));
   }
 
   @UseGuards(JwtAuthGuard)

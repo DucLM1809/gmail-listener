@@ -15,10 +15,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: configService.get('JWT_SECRET'),
+      passReqToCallback: true,
     });
   }
 
   async validate(
+    req: any,
     payload: UserSession,
   ): Promise<Pick<UserSession, 'userId' | 'email' | 'role'>> {
     const user = await this.userRepository.findOne(payload.userId);
@@ -28,7 +30,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     if (user.isTwoFactorEnabled) {
-      if (!payload.isTwoFactorAuthenticated) {
+      if (
+        !payload.isTwoFactorAuthenticated &&
+        !req.url.includes('2fa/verify')
+      ) {
         throw new UnauthorizedException('Two-factor authentication required');
       }
     }

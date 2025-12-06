@@ -8,11 +8,12 @@ import { Result } from 'src/core/result';
 import { AppLoggerService } from 'src/core/services/app-logger.service';
 import { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { EmailService } from 'src/modules/email/email.service';
-import { GoogleUserDto } from '../dto/auth/google-user.dto';
-import { LoginDto } from '../dto/auth/login.dto';
-import { RegisterResponseDto } from '../dto/auth/register-response.dto';
-import { RegisterDto } from '../dto/auth/register.dto';
-import { TwoFactorGenerateResponseDto } from '../dto/auth/two-factor-generate-response.dto';
+import { GoogleUserDto } from '../dto/google-user.dto';
+import { LoginDto } from '../dto/login.dto';
+import { RegisterResponseDto } from '../dto/register-response.dto';
+import { RegisterDto } from '../dto/register.dto';
+import { TwoFactorGenerateResponseDto } from '../dto/two-factor-generate-response.dto';
+import { UserProfileDto } from '../dto/user-profile.dto';
 import {
   InvalidCredentialsException,
   InvalidTokenException,
@@ -230,6 +231,23 @@ export class AuthService {
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
     return Result.ok(tokens);
+  }
+
+  async getProfile(userId: string): Promise<Result<UserProfileDto>> {
+    const user = await this.userRepository.findOne(userId);
+
+    if (!user) {
+      return Result.fail(new InvalidCredentialsException());
+    }
+
+    return Result.ok({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      role: user.role,
+      isTwoFactorEnabled: user.isTwoFactorEnabled,
+    });
   }
 
   async refreshTokens(

@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
-import { PasswordReuseException } from '../exceptions/auth.exceptions';
+import {
+  InvalidCredentialsException,
+  PasswordReuseException,
+} from '../exceptions/auth.exceptions';
 import { ConfigService } from '@nestjs/config';
 import { AppLoggerService } from 'src/core/services/app-logger.service';
 import { EmailService } from 'src/modules/email/email.service';
@@ -108,6 +111,38 @@ describe('AuthService', () => {
 
       expect(result.isSuccess).toBe(true);
       expect(mockUserRepository.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('getProfile', () => {
+    it('should return user profile if user exists', async () => {
+      const userId = 'user-id';
+      const user = {
+        id: userId,
+        email: 'test@example.com',
+        name: 'Test User',
+        picture: 'http://example.com/pic.jpg',
+        role: 1,
+        isTwoFactorEnabled: false,
+      };
+
+      mockUserRepository.findOne.mockResolvedValue(user);
+
+      const result = await service.getProfile(userId);
+
+      expect(result.isSuccess).toBe(true);
+      expect(result.getValue()).toEqual(user);
+    });
+
+    it('should fail if user does not exist', async () => {
+      const userId = 'user-id';
+
+      mockUserRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.getProfile(userId);
+
+      expect(result.isFailure).toBe(true);
+      expect(result.error).toBeInstanceOf(InvalidCredentialsException);
     });
   });
 });
