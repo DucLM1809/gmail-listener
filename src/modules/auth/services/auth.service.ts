@@ -286,13 +286,13 @@ export class AuthService {
 
     const [accessToken, refreshToken] = await Promise.all([
       this.tokenService.generateToken({
-        sub: userId,
+        userId,
         email,
         role,
         isTwoFactorAuthenticated,
       }),
       this.tokenService.generateToken({
-        sub: userId,
+        userId,
         email,
         role,
         isTwoFactorAuthenticated,
@@ -313,7 +313,7 @@ export class AuthService {
     }
 
     const token = await this.tokenService.generateToken({
-      sub: user.id,
+      userId: user.id,
       email: user.email,
       type: 'reset-password',
     });

@@ -9,7 +9,13 @@ export class TokenService {
     private configService: ConfigService,
   ) {}
 
-  async generateToken(payload: any) {
+  async generateToken(payload: {
+    userId: string;
+    email: string;
+    role?: number;
+    isTwoFactorAuthenticated?: boolean;
+    type?: string;
+  }) {
     return await this.jwt.signAsync(payload, {
       secret: this.configService.get('JWT_SECRET'),
       expiresIn: this.configService.get('JWT_EXPIRES_IN'),
