@@ -85,7 +85,14 @@ export class AuthService {
       });
     }
 
-    return this.getTokens(user.id, user.email, true);
+    return this.getTokens(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      true,
+    );
   }
 
   async register(
@@ -109,7 +116,14 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const tokens = await this.getTokens(user.id, user.email, false);
+    const tokens = await this.getTokens(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      false,
+    );
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -139,7 +153,14 @@ export class AuthService {
       return Result.fail(new InvalidCredentialsException());
     }
 
-    const tokens = await this.getTokens(user.id, user.email, true);
+    const tokens = await this.getTokens(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      true,
+    );
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -197,7 +218,14 @@ export class AuthService {
       isTwoFactorEnabled: true,
     });
 
-    const tokens = await this.getTokens(user.id, user.email, true);
+    const tokens = await this.getTokens(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      true,
+    );
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
     return Result.ok(tokens);
@@ -224,7 +252,14 @@ export class AuthService {
       return Result.fail(new ForbiddenException('Access Denied'));
     }
 
-    const tokens = await this.getTokens(user.id, user.email, true);
+    const tokens = await this.getTokens(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      true,
+    );
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -240,19 +275,26 @@ export class AuthService {
   }
 
   private async getTokens(
-    userId: string,
-    email: string,
+    payload: {
+      userId: string;
+      email: string;
+      role: number;
+    },
     isTwoFactorAuthenticated: boolean,
   ): Promise<TokenResponse> {
+    const { userId, email, role } = payload;
+
     const [accessToken, refreshToken] = await Promise.all([
       this.tokenService.generateToken({
         sub: userId,
         email,
+        role,
         isTwoFactorAuthenticated,
       }),
       this.tokenService.generateToken({
         sub: userId,
         email,
+        role,
         isTwoFactorAuthenticated,
       }),
     ]);
