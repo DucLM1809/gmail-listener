@@ -18,12 +18,14 @@ import {
   InvalidCredentialsException,
   InvalidTokenException,
   InvalidTokenTypeException,
+  InvalidTwoFactorCodeException,
   PasswordReuseException,
   UserAlreadyExistsException,
 } from '../exceptions/auth.exceptions';
 import { LoginResponse, TokenResponse } from '../interfaces/token.response';
 import { TokenService } from './token.service';
 import { UserSession } from 'src/core/interfaces/user-session.interface';
+import { Role } from '../enums/role.enum';
 
 @Injectable()
 export class AuthService {
@@ -161,7 +163,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
       },
-      false,
+      user.role === Role.Admin ? true : false,
     );
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
@@ -213,7 +215,7 @@ export class AuthService {
     });
 
     if (!isValid) {
-      return Result.fail(new ForbiddenException('Invalid 2FA code'));
+      return Result.fail(new InvalidTwoFactorCodeException());
     }
 
     await this.userRepository.update(user.id, {
@@ -283,6 +285,14 @@ export class AuthService {
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
     return Result.ok(tokens);
+  }
+
+  async logout(userId: string): Promise<Result<void>> {
+    await this.userRepository.update(userId, {
+      hashedRefreshToken: null,
+    });
+
+    return Result.ok();
   }
 
   async updateRefreshToken(userId: string, refreshToken: string) {

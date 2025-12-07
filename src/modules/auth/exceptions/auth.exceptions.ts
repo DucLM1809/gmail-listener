@@ -41,3 +41,10 @@ export class InvalidTokenTypeException extends AppException {
     this.name = 'InvalidTokenTypeException';
   }
 }
+
+export class InvalidTwoFactorCodeException extends AppException {
+  constructor() {
+    super('Invalid 2FA code');
+    this.name = 'InvalidTwoFactorCodeException';
+  }
+}

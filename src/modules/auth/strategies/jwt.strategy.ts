@@ -4,6 +4,7 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IUserRepository } from 'src/domain/repositories/user.repository.interface';
 import { UserSession } from 'src/core/interfaces/user-session.interface';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -20,7 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(
-    req: any,
+    req: Request,
     payload: UserSession,
   ): Promise<Pick<UserSession, 'userId' | 'email' | 'role'>> {
     const user = await this.userRepository.findOne(payload.userId);
@@ -30,10 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     if (user.isTwoFactorEnabled) {
-      if (
-        !payload.isTwoFactorAuthenticated &&
-        !req.url.includes('2fa/verify')
-      ) {
+      if (!payload.isTwoFactorAuthenticated && !req.url.includes('2fa')) {
         throw new UnauthorizedException('Two-factor authentication required');
       }
     }

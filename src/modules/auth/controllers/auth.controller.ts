@@ -24,6 +24,7 @@ import {
   InvalidCredentialsException,
   InvalidTokenException,
   InvalidTokenTypeException,
+  InvalidTwoFactorCodeException,
   PasswordReuseException,
   UserAlreadyExistsException,
 } from '../exceptions/auth.exceptions';
@@ -145,6 +146,19 @@ export class AuthController extends BaseController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @Post('logout')
+  @ApiOperation({ summary: 'Logout user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User successfully logged out',
+  })
+  async logout(@User() user: UserSession) {
+    this.logger.log('Logout request received');
+    return this.handleResult(await this.authService.logout(user.userId));
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
@@ -253,6 +267,10 @@ export class AuthController extends BaseController {
     }
 
     if (error instanceof PasswordReuseException) {
+      return new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+
+    if (error instanceof InvalidTwoFactorCodeException) {
       return new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
 
