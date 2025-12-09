@@ -11,6 +11,8 @@ export class UserMapper {
     dto.name = user.name;
     dto.picture = user.picture;
     dto.role = Role[user.role];
+    dto.createdAt = user.createdAt;
+    dto.updatedAt = user.updatedAt;
 
     return dto;
   }

@@ -58,6 +58,8 @@ export class UserService {
           name: true,
           picture: true,
           role: true,
+          createdAt: true,
+          updatedAt: true,
         },
         where,
       }),
@@ -78,7 +80,7 @@ export class UserService {
   ): Promise<Result<PageDto<UserResponseDto>>> {
     const [users, totalResult] = await Promise.all([
       this.prismaService.$queryRaw<User[]>`
-      SELECT id, email, name, picture, role
+      SELECT id, email, name, picture, role, created_at, updated_at
       FROM "User"
       WHERE role = ${Role.User}
       ${
