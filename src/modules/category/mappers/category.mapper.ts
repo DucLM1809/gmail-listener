@@ -10,7 +10,7 @@ export class CategoryMapper {
     dto.name = entity.name;
     dto.description = entity.description;
     dto.image = entity.image;
-    dto.type = CategoryType[entity.type];
+    dto.type = entity.type;
     dto.createdAt = entity.createdAt;
     dto.updatedAt = entity.updatedAt;
     return dto;

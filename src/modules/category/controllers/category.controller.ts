@@ -21,6 +21,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { PageOptionsDto } from '../../../core/dto/page-options.dto';
+import { CategoryPageOptionsDto } from '../dto/category-page-options.dto';
 import { PageDto } from '../../../core/dto/page.dto';
 import { CategoryResponseDto } from '../dto/category-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -65,7 +66,7 @@ export class CategoryController extends BaseController {
     type: PageDto,
   })
   async findAll(
-    @Query() pageOptionsDto: PageOptionsDto,
+    @Query() pageOptionsDto: CategoryPageOptionsDto,
     @User() user: UserSession,
   ) {
     return this.handleResult(

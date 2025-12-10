@@ -15,6 +15,6 @@ export class CategoryResponseDto extends BaseResponseDto {
   @ApiPropertyOptional({ example: 'https://example.com/icon.png' })
   image?: string;
 
-  @ApiProperty({ enum: CategoryType, example: 'Expense' })
-  type: string;
+  @ApiProperty({ enum: CategoryType, example: CategoryType.Expense })
+  type: CategoryType;
 }

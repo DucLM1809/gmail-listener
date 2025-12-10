@@ -4,12 +4,14 @@ import { PageMetaDto } from '../../../core/dto/page-meta.dto';
 import { PageOptionsDto } from '../../../core/dto/page-options.dto';
 import { PageDto } from '../../../core/dto/page.dto';
 import { ICategoryRepository } from '../../../domain/repositories/category.repository.interface';
+import { CategoryPageOptionsDto } from '../dto/category-page-options.dto';
 import { CategoryResponseDto } from '../dto/category-response.dto';
 import { CreateCategoryDto } from '../dto/create-category.dto';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
 import { CategoryMapper } from '../mappers/category.mapper';
 import { Result } from '../../../core/result';
 import { CategoryNotFoundException } from '../exceptions/category.exceptions';
+import { Prisma } from 'generated/prisma/client';
 
 @Injectable()
 export class CategoryService {
@@ -34,30 +36,39 @@ export class CategoryService {
         },
       },
     });
+
     return Result.ok(CategoryMapper.toDto(category));
   }
 
   async findAll(
-    pageOptionsDto: PageOptionsDto,
+    pageOptionsDto: CategoryPageOptionsDto,
     userId: string,
   ): Promise<Result<PageDto<CategoryResponseDto>>> {
+    const where: Prisma.CategoryWhereInput = {
+      deletedAt: null,
+      ...(pageOptionsDto.q && {
+        name: {
+          contains: pageOptionsDto.q,
+          mode: 'insensitive',
+        },
+      }),
+      ...(pageOptionsDto.type && {
+        type: pageOptionsDto.type,
+      }),
+      OR: [{ createdBy: userId }, { createdBy: null }],
+    };
+
     const [categories, total] = await this.prismaService.$transaction([
       this.categoryRepository.findAll({
         skip: pageOptionsDto.skip,
         take: pageOptionsDto.take,
-        where: {
-          deletedAt: null,
-          OR: [{ createdBy: userId }, { createdBy: null }],
-        },
+        where,
         orderBy: {
           createdAt: pageOptionsDto.order === 'ASC' ? 'asc' : 'desc',
         },
       }),
       this.categoryRepository.count({
-        where: {
-          deletedAt: null,
-          OR: [{ createdBy: userId }, { createdBy: null }],
-        },
+        where,
       }),
     ]);
 
@@ -69,9 +80,11 @@ export class CategoryService {
 
   async findOne(id: string): Promise<Result<CategoryResponseDto>> {
     const category = await this.categoryRepository.findOne(id);
+
     if (!category || category.deletedAt) {
       return Result.fail(new CategoryNotFoundException());
     }
+
     return Result.ok(CategoryMapper.toDto(category));
   }
 
@@ -80,6 +93,7 @@ export class CategoryService {
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<Result<CategoryResponseDto>> {
     const categoryExists = await this.categoryRepository.findOne(id);
+
     if (!categoryExists || categoryExists.deletedAt) {
       return Result.fail(new CategoryNotFoundException());
     }
@@ -88,11 +102,13 @@ export class CategoryService {
       id,
       updateCategoryDto,
     );
+
     return Result.ok(CategoryMapper.toDto(category));
   }
 
   async remove(id: string, userId: string): Promise<Result<boolean>> {
     const category = await this.categoryRepository.findOne(id);
+
     if (!category || category.deletedAt) {
       return Result.fail(new CategoryNotFoundException());
     }
