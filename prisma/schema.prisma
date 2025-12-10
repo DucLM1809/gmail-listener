@@ -27,6 +27,9 @@ model Transaction {
   chargeCode          String?
   chargeAmount        Float?
   createdAt           DateTime  @default(now())
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
 }
 
 model User {
@@ -42,8 +45,26 @@ model User {
   isTwoFactorEnabled Boolean @default(false)
   role               Int     @default(1)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  categories Category[]
 
   @@index([role, createdAt])
+}
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  image       String?
+  type        Int     @default(1)
+
+  createdBy String?
+  user      User?   @relation(fields: [createdBy], references: [id])
+
+  transactions Transaction[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }

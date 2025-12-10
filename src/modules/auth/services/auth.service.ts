@@ -316,7 +316,7 @@ export class AuthService {
         role,
         isTwoFactorAuthenticated,
       }),
-      this.tokenService.generateToken({
+      this.tokenService.generateRefreshToken({
         userId,
         email,
         role,

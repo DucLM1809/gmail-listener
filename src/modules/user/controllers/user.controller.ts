@@ -26,7 +26,6 @@ import { UserNotFoundException } from '../exceptions/user.exceptions';
 import { UserService } from '../services/user.service';
 import { PageOptionsDto } from 'src/core/dto/page-options.dto';
 import { PageDto } from 'src/core/dto/page.dto';
-import { User } from 'generated/prisma/client';
 import { UserResponseDto } from '../dto/user-response.dto';
 
 @ApiTags('Users')
