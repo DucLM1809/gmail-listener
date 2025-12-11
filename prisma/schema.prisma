@@ -48,8 +48,24 @@ model User {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   categories Category[]
+  accounts   Account[]
 
   @@index([role, createdAt])
+}
+
+model Account {
+  id             String @id @default(cuid())
+  name           String
+  type           String
+  currentBalance Float  @default(0)
+  initialBalance Float  @default(0)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
 
 model Category {

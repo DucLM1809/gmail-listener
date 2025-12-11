@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import { PageMetaDto } from '../../../core/dto/page-meta.dto';
-import { PageOptionsDto } from '../../../core/dto/page-options.dto';
+import { PageOptionsDto, Order } from '../../../core/dto/page-options.dto';
 import { PageDto } from '../../../core/dto/page.dto';
 import { ICategoryRepository } from '../../../domain/repositories/category.repository.interface';
 import { CategoryPageOptionsDto } from '../dto/category-page-options.dto';
@@ -64,7 +64,7 @@ export class CategoryService {
         take: pageOptionsDto.take,
         where,
         orderBy: {
-          createdAt: pageOptionsDto.order === 'ASC' ? 'asc' : 'desc',
+          createdAt: pageOptionsDto.order === Order.ASC ? 'asc' : 'desc',
         },
       }),
       this.categoryRepository.count({

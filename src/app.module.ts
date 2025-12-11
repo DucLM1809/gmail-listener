@@ -11,6 +11,7 @@ import { CoreModule } from './core/core.module';
 import { EmailModule } from './modules/email/email.module';
 import { UserModule } from './modules/user/user.module';
 import { CategoryModule } from './modules/category/category.module';
+import { AccountModule } from './modules/account/account.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CategoryModule } from './modules/category/category.module';
     EmailModule,
     UserModule,
     CategoryModule,
+    AccountModule,
   ],
 })
 export class AppModule {}
