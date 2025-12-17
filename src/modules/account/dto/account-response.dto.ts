@@ -3,6 +3,9 @@ import { BaseResponseDto } from '../../../core/dto/base-response.dto';
 
 export class AccountResponseDto extends BaseResponseDto {
   @ApiProperty()
+  id: string;
+
+  @ApiProperty()
   name: string;
 
   @ApiProperty()

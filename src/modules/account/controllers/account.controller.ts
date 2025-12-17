@@ -26,14 +26,14 @@ import { UserSession } from '../../../core/interfaces/user-session.interface';
 import { PageOptionsDto } from '../../../core/dto/page-options.dto';
 import { PageDto } from '../../../core/dto/page.dto';
 import { AccountResponseDto } from '../dto/account-response.dto';
-import { Result } from '../../../core/result';
 import { BaseController } from 'src/core/base.controller';
 import { AccountNotFoundException } from '../exceptions/account.exceptions';
+import { Role } from '../../auth/enums/role.enum';
 
 @ApiTags('Accounts')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('v1/accounts')
+@Controller('accounts')
 export class AccountController extends BaseController {
   constructor(private readonly accountService: AccountService) {
     super();
@@ -60,10 +60,18 @@ export class AccountController extends BaseController {
   })
   async findAll(
     @Query() pageOptionsDto: PageOptionsDto,
+    @Query('userId') userId: string,
     @User() user: UserSession,
   ) {
+    const targetUserId =
+      user.role === Role.Admin && userId ? userId : undefined;
+
     return this.handleResult(
-      await this.accountService.findAll(pageOptionsDto, user.userId),
+      await this.accountService.findAll(
+        pageOptionsDto,
+        user.userId,
+        targetUserId,
+      ),
     );
   }
 
@@ -74,8 +82,10 @@ export class AccountController extends BaseController {
     description: 'Return account details.',
     type: AccountResponseDto,
   })
-  async findOne(@Param('id') id: string) {
-    return this.handleResult(await this.accountService.findOne(id));
+  async findOne(@Param('id') id: string, @User() user: UserSession) {
+    return this.handleResult(
+      await this.accountService.findOne(id, user.userId, user.role),
+    );
   }
 
   @Patch(':id')
@@ -84,17 +94,38 @@ export class AccountController extends BaseController {
   async update(
     @Param('id') id: string,
     @Body() updateAccountDto: UpdateAccountDto,
+    @User() user: UserSession,
   ) {
     return this.handleResult(
-      await this.accountService.update(id, updateAccountDto),
+      await this.accountService.update(
+        id,
+        updateAccountDto,
+        user.userId,
+        user.role,
+      ),
     );
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete account' })
   @ApiResponse({ status: 200, description: 'Account deleted successfully.' })
-  async remove(@Param('id') id: string) {
-    return this.handleResult(await this.accountService.remove(id));
+  async remove(@Param('id') id: string, @User() user: UserSession) {
+    return this.handleResult(
+      await this.accountService.remove(id, user.userId, user.role),
+    );
+  }
+
+  @Get('users/:userId/stats')
+  @ApiOperation({ summary: 'Get account statistics for a user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return account statistics.',
+  })
+  async getStats(@Param('userId') userId: string, @User() user: UserSession) {
+    if (user.role !== Role.Admin && user.userId !== userId) {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+    return this.handleResult(await this.accountService.getStats(userId));
   }
 
   protected resolveError(error: any): HttpException {

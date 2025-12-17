@@ -1,6 +1,5 @@
 import { Category } from 'generated/prisma/client';
 import { CategoryResponseDto } from '../dto/category-response.dto';
-import { CategoryType } from '../enums/type.enum';
 
 export class CategoryMapper {
   static toDto(entity: Category): CategoryResponseDto {

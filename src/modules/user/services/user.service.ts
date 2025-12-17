@@ -7,7 +7,7 @@ import { UserNotFoundException } from '../exceptions/user.exceptions';
 
 import { PageDto } from 'src/core/dto/page.dto';
 import { PageMetaDto } from 'src/core/dto/page-meta.dto';
-import { PageOptionsDto, Order } from 'src/core/dto/page-options.dto';
+import { PageOptionsDto } from 'src/core/dto/page-options.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { UserMapper } from '../mappers/user.mapper';
 import { Role } from 'src/modules/auth/enums/role.enum';
@@ -50,7 +50,7 @@ export class UserService {
         skip: pageOptionsDto.skip,
         take: pageOptionsDto.take,
         orderBy: {
-          createdAt: pageOptionsDto.order === Order.ASC ? 'asc' : 'desc',
+          createdAt: pageOptionsDto.order,
         },
         select: {
           id: true,
