@@ -29,10 +29,12 @@ import { AccountResponseDto } from '../dto/account-response.dto';
 import { BaseController } from 'src/core/base.controller';
 import { AccountNotFoundException } from '../exceptions/account.exceptions';
 import { Role } from '../../auth/enums/role.enum';
+import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
+import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 
 @ApiTags('Accounts')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('accounts')
 export class AccountController extends BaseController {
   constructor(private readonly accountService: AccountService) {
@@ -133,5 +135,29 @@ export class AccountController extends BaseController {
       return new HttpException(error.message, HttpStatus.NOT_FOUND);
     }
     return super.resolveError(error);
+  }
+
+  @Roles(Role.Admin)
+  @Get('users/:userId')
+  @ApiOperation({ summary: 'Get all accounts for a specific user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return all accounts for the user.',
+    type: PageDto,
+  })
+  async findAllByUser(
+    @Param('userId') userId: string,
+    @Query() pageOptionsDto: PageOptionsDto,
+    @User() user: UserSession,
+  ) {
+    const targetUserId = user.role === Role.Admin ? userId : user.userId;
+
+    return this.handleResult(
+      await this.accountService.findAll(
+        pageOptionsDto,
+        user.userId,
+        targetUserId,
+      ),
+    );
   }
 }
