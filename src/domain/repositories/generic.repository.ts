@@ -5,4 +5,6 @@ export interface IGenericRepository<T> {
   update(id: string | number, data: any): Promise<T>;
   delete(id: string | number): Promise<T>;
   count(params?: any): Promise<number>;
+  aggregate(params: any): Promise<any>;
+  groupBy(params: any): Promise<any>;
 }

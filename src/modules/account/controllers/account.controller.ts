@@ -31,6 +31,7 @@ import { AccountNotFoundException } from '../exceptions/account.exceptions';
 import { Role } from '../../auth/enums/role.enum';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
+import { AccountStatsDto } from '../dto/account-stats.dto';
 
 @ApiTags('Accounts')
 @ApiBearerAuth()
@@ -122,19 +123,10 @@ export class AccountController extends BaseController {
   @ApiResponse({
     status: 200,
     description: 'Return account statistics.',
+    type: AccountStatsDto,
   })
-  async getStats(@Param('userId') userId: string, @User() user: UserSession) {
-    if (user.role !== Role.Admin && user.userId !== userId) {
-      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
-    }
+  async getStats(@Param('userId') userId: string) {
     return this.handleResult(await this.accountService.getStats(userId));
-  }
-
-  protected resolveError(error: any): HttpException {
-    if (error instanceof AccountNotFoundException) {
-      return new HttpException(error.message, HttpStatus.NOT_FOUND);
-    }
-    return super.resolveError(error);
   }
 
   @Roles(Role.Admin)
@@ -159,5 +151,25 @@ export class AccountController extends BaseController {
         targetUserId,
       ),
     );
+  }
+
+  @Post('users/:userId')
+  @Roles(Role.Admin)
+  @ApiOperation({ summary: 'Create a new account for specific user' })
+  @ApiResponse({ status: 201, description: 'Account created successfully.' })
+  async createUserAccount(
+    @Body() createAccountDto: CreateAccountDto,
+    @Param('userId') userId: string,
+  ) {
+    return this.handleResult(
+      await this.accountService.create(createAccountDto, userId),
+    );
+  }
+
+  protected resolveError(error: any): HttpException {
+    if (error instanceof AccountNotFoundException) {
+      return new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
+    return super.resolveError(error);
   }
 }

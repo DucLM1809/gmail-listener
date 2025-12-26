@@ -12,7 +12,6 @@ export class AccountRepository
   constructor(prisma: PrismaService) {
     super(prisma, 'account');
   }
-
   create(data: Prisma.AccountCreateInput): Prisma.PrismaPromise<Account> {
     return super.create(data);
   }
@@ -22,5 +21,17 @@ export class AccountRepository
     data: Prisma.AccountUpdateInput,
   ): Prisma.PrismaPromise<Account> {
     return super.update(id, data);
+  }
+
+  aggregate<T extends Prisma.AccountAggregateArgs>(
+    args: T,
+  ): Prisma.PrismaPromise<Prisma.GetAccountAggregateType<T>> {
+    return this.prisma.account.aggregate(args);
+  }
+
+  groupBy<T extends Prisma.AccountGroupByArgs>(
+    args: Prisma.SelectSubset<T, Prisma.AccountGroupByArgs>,
+  ): Prisma.PrismaPromise<Array<any>> {
+    return (this.prisma.account.groupBy as any)(args);
   }
 }

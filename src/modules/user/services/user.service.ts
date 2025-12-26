@@ -45,7 +45,7 @@ export class UserService {
       }),
     };
 
-    const [users, itemCount] = await this.prismaService.$transaction([
+    const [users, itemCount] = await Promise.all([
       this.userRepository.findAll({
         skip: pageOptionsDto.skip,
         take: pageOptionsDto.take,
@@ -83,11 +83,10 @@ export class UserService {
       SELECT id, email, name, picture, role, created_at, updated_at
       FROM "User"
       WHERE role = ${Role.User}
-      ${
-        pageOptionsDto.q
+      ${pageOptionsDto.q
           ? Prisma.sql`AND (email ILIKE ${`%${pageOptionsDto.q}%`} OR name ILIKE ${`%${pageOptionsDto.q}%`})`
           : Prisma.empty
-      }
+        }
       ORDER BY "createdAt" DESC
       LIMIT ${pageOptionsDto.take} OFFSET ${pageOptionsDto.skip}
     `,
@@ -95,11 +94,10 @@ export class UserService {
       SELECT COUNT(*)::int as count
       FROM "User"
       WHERE role = ${Role.User}
-      ${
-        pageOptionsDto.q
+      ${pageOptionsDto.q
           ? Prisma.sql`AND (email ILIKE ${`%${pageOptionsDto.q}%`} OR name ILIKE ${`%${pageOptionsDto.q}%`})`
           : Prisma.empty
-      }
+        }
     `,
     ]);
 

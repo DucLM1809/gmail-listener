@@ -10,27 +10,26 @@ import { Role } from '../../auth/enums/role.enum';
 import { AccountNotFoundException } from '../exceptions/account.exceptions';
 import { CreateAccountDto } from '../dto/create-account.dto';
 import { UpdateAccountDto } from '../dto/update-account.dto';
-import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class AccountService {
   constructor(
     @Inject('IAccountRepository')
     private readonly accountRepository: IAccountRepository,
-    private readonly prismaService: PrismaService,
   ) {}
 
   async create(createAccountDto: CreateAccountDto, userId: string) {
     const account = await this.accountRepository.create({
       ...createAccountDto,
-      initialBalance: createAccountDto.initialBalance || 0,
-      currentBalance: createAccountDto.currentBalance || 0,
+      initialBalance: createAccountDto.initialBalance ?? 0,
+      currentBalance: createAccountDto.currentBalance ?? 0,
       user: {
         connect: {
           id: userId,
         },
       },
     });
+
     return Result.ok(account);
   }
 
@@ -46,7 +45,7 @@ export class AccountService {
       deletedAt: null,
     };
 
-    const [accounts, itemCount] = await this.prismaService.$transaction([
+    const [accounts, itemCount] = await Promise.all([
       this.accountRepository.findAll({
         skip,
         take,
@@ -90,36 +89,42 @@ export class AccountService {
   }
 
   async getStats(userId: string) {
-    const accounts = await this.accountRepository.findAll({
-      where: {
-        userId,
-        deletedAt: null,
-      },
-    });
-
-    const totalBalance = accounts.reduce(
-      (acc, curr) => acc + curr.currentBalance,
-      0,
-    );
-
-    const accountsByType = accounts.reduce(
-      (acc, curr) => {
-        const type = curr.type;
-        if (!acc[type]) {
-          acc[type] = 0;
-        }
-        acc[type]++;
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
+    const [totalInitialBalance, totalCurrentBalance, accountsByType] =
+      await Promise.all([
+        this.accountRepository.aggregate({
+          where: {
+            userId,
+            deletedAt: null,
+          },
+          _sum: {
+            initialBalance: true,
+          },
+        }),
+        this.accountRepository.aggregate({
+          where: {
+            userId,
+            deletedAt: null,
+          },
+          _sum: {
+            currentBalance: true,
+          },
+        }),
+        this.accountRepository.groupBy({
+          where: {
+            userId,
+            deletedAt: null,
+          },
+          by: ['type'],
+          _count: {
+            id: true,
+          },
+        }),
+      ]);
 
     return Result.ok({
-      totalBalance,
-      accountsByType: Object.keys(accountsByType).map((key) => ({
-        type: key,
-        count: accountsByType[key],
-      })),
+      totalInitialBalance: totalInitialBalance._sum.initialBalance,
+      totalCurrentBalance: totalCurrentBalance._sum.currentBalance,
+      accountsByType,
     });
   }
 

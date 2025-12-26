@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/infrastructure/prisma/prisma.service';
 import { PageMetaDto } from '../../../core/dto/page-meta.dto';
-import { PageOptionsDto, Order } from '../../../core/dto/page-options.dto';
+import { Order } from '../../../core/dto/page-options.dto';
 import { PageDto } from '../../../core/dto/page.dto';
 import { ICategoryRepository } from '../../../domain/repositories/category.repository.interface';
 import { CategoryPageOptionsDto } from '../dto/category-page-options.dto';
@@ -18,7 +17,6 @@ export class CategoryService {
   constructor(
     @Inject('ICategoryRepository')
     private readonly categoryRepository: ICategoryRepository,
-    private readonly prismaService: PrismaService,
   ) {}
 
   async create(
@@ -58,7 +56,7 @@ export class CategoryService {
       OR: [{ createdBy: userId }, { createdBy: null }],
     };
 
-    const [categories, total] = await this.prismaService.$transaction([
+    const [categories, total] = await Promise.all([
       this.categoryRepository.findAll({
         skip: pageOptionsDto.skip,
         take: pageOptionsDto.take,

@@ -44,4 +44,12 @@ export abstract class PrismaGenericRepository<T>
   count(params?: any): Prisma.PrismaPromise<number> {
     return (this.prisma as any)[this.modelName].count(params);
   }
+
+  aggregate(params: any): Prisma.PrismaPromise<any> {
+    return (this.prisma as any)[this.modelName].aggregate(params);
+  }
+
+  groupBy(params: any): Prisma.PrismaPromise<any> {
+    return (this.prisma as any)[this.modelName].groupBy(params);
+  }
 }

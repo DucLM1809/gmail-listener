@@ -9,4 +9,10 @@ export interface IAccountRepository extends IGenericRepository<Account> {
     id: string,
     data: Prisma.AccountUpdateInput,
   ): Prisma.PrismaPromise<Account>;
+  aggregate<T extends Prisma.AccountAggregateArgs>(
+    args: T,
+  ): Prisma.PrismaPromise<Prisma.GetAccountAggregateType<T>>;
+  groupBy<T extends Prisma.AccountGroupByArgs>(
+    args: Prisma.SelectSubset<T, Prisma.AccountGroupByArgs>,
+  ): Prisma.PrismaPromise<Array<any>>;
 }
